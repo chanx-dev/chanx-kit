@@ -1,13 +1,19 @@
-site_name: ChanX Kit
+site_name: chanx-kit
 site_description: A collection of composable, copy-in WebSocket kits for chanx.
 site_url: https://huynguyengl99.github.io/chanx-kit/
 repo_url: https://github.com/huynguyengl99/chanx-kit
 repo_name: huynguyengl99/chanx-kit
 edit_uri: edit/main/
 copyright: MIT licensed
+# The brand guide sits next to the assets for people browsing the repo; it is not a page.
+exclude_docs: |
+  assets/brand/README.md
 
 theme:
   name: material
+  custom_dir: overrides
+  logo: assets/brand/chanx-kit-wordmark-dark.svg
+  favicon: assets/brand/favicon.ico
   icon:
     repo: fontawesome/brands/github
   features:
@@ -29,15 +35,15 @@ theme:
         name: Follow system
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-7
         name: Dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-4
         name: Light mode
@@ -75,6 +81,7 @@ markdown_extensions:
 
 extra_css:
   - stylesheets/kits.css
+  - stylesheets/brand.css
 extra_javascript:
   - javascripts/kit-filter.js
 

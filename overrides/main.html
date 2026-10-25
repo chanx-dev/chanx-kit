@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+  {{ super() }}
+  {#- Link previews: one card for the whole site. -#}
+  <meta property="og:image" content="{{ config.site_url }}assets/brand/social-card.png">
+  <meta property="og:image:alt" content="chanx-kit: copy-in WebSocket kits for chanx">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#1e3a8a">
+  <link rel="apple-touch-icon" href="{{ 'assets/brand/apple-touch-icon.png' | url }}">
+{% endblock %}

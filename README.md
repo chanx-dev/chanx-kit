@@ -1,4 +1,9 @@
-# ChanX Kit
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/huynguyengl99/chanx-kit/main/docs/assets/brand/chanx-kit-wordmark-dark.svg">
+    <img alt="chanx-kit" src="https://raw.githubusercontent.com/huynguyengl99/chanx-kit/main/docs/assets/brand/chanx-kit-wordmark.svg" height="64">
+  </picture>
+</h1>
 
 A collection of best-practice, reusable WebSocket components.
 

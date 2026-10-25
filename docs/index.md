@@ -3,7 +3,7 @@ hide:
   - navigation
 ---
 
-# ChanX Kit
+# ![chanx-kit](assets/brand/chanx-kit-wordmark.svg#only-light){ .hero-wordmark } ![chanx-kit](assets/brand/chanx-kit-wordmark-dark.svg#only-dark){ .hero-wordmark }
 
 *Pronounced "chan-X kit": a collection of composable, copy-in WebSocket kits for
 [chanx](https://github.com/huynguyengl99/chanx) (**CHAN**nels-e**X**tension).*

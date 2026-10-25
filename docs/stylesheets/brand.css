@@ -1,0 +1,34 @@
+/* The family palette: a navy header and blue links, the same as the chanx and chanx-js docs. */
+:root,
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #1e3a8a;
+  --md-primary-fg-color--light: #2563eb;
+  --md-primary-fg-color--dark: #172554;
+  --md-accent-fg-color: #2563eb;
+  --md-typeset-a-color: #1e40af;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #1e3a8a;
+  --md-primary-fg-color--light: #2563eb;
+  --md-primary-fg-color--dark: #172554;
+  --md-accent-fg-color: #93b4ff;
+  --md-typeset-a-color: #93b4ff;
+}
+
+/* The header logo is the wordmark, which already spells the name: give it room and hide the
+   site name next to it. The page title still appears there on scroll. */
+.md-header__button.md-logo img {
+  height: 1.7rem;
+  width: auto;
+}
+
+.md-header__title .md-header__topic:first-child {
+  display: none;
+}
+
+/* Home page: the drawn wordmark stands in for the typed name. */
+.md-typeset h1 .hero-wordmark {
+  height: 3.6rem;
+  width: auto;
+}

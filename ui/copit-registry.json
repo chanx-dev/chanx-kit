@@ -1,7 +1,7 @@
 {
   "version": 1,
   "name": "chanx-kit-ui",
-  "title": "ChanX Kit UI",
+  "title": "chanx-kit UI",
   "description": "Copy-in UI for chanx-kit contracts. Framework-free cores, React components.",
   "source": "github:huynguyengl99/chanx-kit",
   "homepage": "https://github.com/huynguyengl99/chanx-kit",

@@ -39,7 +39,7 @@ export function App() {
     <div className="shell">
       <aside className="sidebar">
         <div className="brand">
-          <h1>ChanX Kit</h1>
+          <h1>chanx-kit</h1>
           <p className="hint">Sandbox</p>
         </div>
         <label>

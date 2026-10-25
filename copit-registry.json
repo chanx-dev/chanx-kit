@@ -1,7 +1,7 @@
 {
   "version": 1,
   "name": "chanx-kit",
-  "title": "ChanX Kit",
+  "title": "chanx-kit",
   "description": "Composable, copy-in WebSocket components for chanx.",
   "source": "github:huynguyengl99/chanx-kit",
   "homepage": "https://github.com/huynguyengl99/chanx-kit",

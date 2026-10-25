@@ -10,7 +10,7 @@ dependencies = [
   "fastapi>=0.115",
   "uvicorn[standard]>=0.35.0"
 ]
-description = "A FastAPI + React app wired to chanx and chanx-js, ready for ChanX Kit."
+description = "A FastAPI + React app wired to chanx and chanx-js, ready for chanx-kit."
 name = "chanx-app"
 readme = "README.md"
 requires-python = ">=3.11"

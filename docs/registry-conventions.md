@@ -3,7 +3,7 @@
 The index format is **copit's**, not ours. See
 [copit's registry documentation](https://huynguyengl99.github.io/copit/registry/) for
 `copit-registry.json`, `[registries.*]` and the JSON Schema. This page records the choices
-ChanX Kit makes *within* that format, and why.
+chanx-kit makes *within* that format, and why.
 
 `scripts/registry.py` generates `copit-registry.json` from `registry.yaml` plus every
 `kits/*/kit.yaml`, and validates the result against copit's schema

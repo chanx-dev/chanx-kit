@@ -30,7 +30,7 @@ def main() -> int:
 
     banner = [
         "",
-        f"  ChanX Kit sandbox   http://{args.host}:{args.port}",
+        f"  chanx-kit sandbox   http://{args.host}:{args.port}",
         f"  AsyncAPI docs       http://{args.host}:{args.port}/asyncapi",
         "",
         "  channel layer       "

@@ -25,10 +25,10 @@ setup_layers()
 UI_DIST = Path(__file__).parent / "ui" / "dist"
 STATIC = Path(__file__).parent / "static"
 
-app = FastAPI(title="ChanX Kit sandbox")
+app = FastAPI(title="chanx-kit sandbox")
 
 asyncapi_config = AsyncAPIConfig(
-    description="WebSocket API exposed by the ChanX Kit sandbox.",
+    description="WebSocket API exposed by the chanx-kit sandbox.",
     version="0.1.0",
 )
 

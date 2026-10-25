@@ -2,7 +2,7 @@
 
 FastAPI on [chanx](https://github.com/huynguyengl99/chanx) and React on
 [chanx-js](https://github.com/huynguyengl99/chanx-js), with the
-[ChanX Kit](https://github.com/huynguyengl99/chanx-kit) `notification` kit wired end to
+[chanx-kit](https://github.com/huynguyengl99/chanx-kit) `notification` kit wired end to
 end. The client is typed from the server's AsyncAPI schema.
 
 Needs [uv](https://docs.astral.sh/uv/) and Node 20.19+.

@@ -1,6 +1,6 @@
 # Contributing
 
-Welcome to ChanX Kits. All contributions are welcome, as long as they give real usage to
+Welcome to chanx-kit. All contributions are welcome, as long as they give real usage to
 the community. To keep the quality of the package high, there are a few prerequisites you
 should follow:
 

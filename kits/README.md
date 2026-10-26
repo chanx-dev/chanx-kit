@@ -8,10 +8,10 @@ copit add @chanx-kit/notification
 ```
 
 Nothing here is installed as a package. A copied kit depends on
-[chanx](https://github.com/huynguyengl99/chanx) alone, and even the test harness is a kit.
+[chanx](https://github.com/chanx-dev/chanx) alone, and even the test harness is a kit.
 
 Every kit's own README covers its messages, hooks and caveats. The
-[docs site](https://huynguyengl99.github.io/chanx-kit/kits/) has the same pages, plus
+[docs site](https://kit.chanx.dev/kits/) has the same pages, plus
 search and generated message schemas.
 
 ## Messaging

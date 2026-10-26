@@ -1,19 +1,19 @@
 target = "vendor"
 
 [registries.chanx-kit]
-source = "github:huynguyengl99/chanx-kit@v0.4.0"
+source = "github:chanx-dev/chanx-kit@v0.4.0"
 target = "app/ws_kits"
 variants = ["fastapi"]
 
 [registries.chanx-kit-ui]
-source = "github:huynguyengl99/chanx-kit@v0.4.0"
+source = "github:chanx-dev/chanx-kit@v0.4.0"
 index = "ui/copit-registry.json"
 target = "web/src/chanx-kit"
 variants = ["react"]
 
 [[sources]]
 path = "app/ws_kits/notification"
-source = "github:huynguyengl99/chanx-kit@v0.4.0/kits/notification"
+source = "github:chanx-dev/chanx-kit@v0.4.0/kits/notification"
 ref = "v0.4.0"
 commit = "7f08fc9746f1408c80b15169da5c62469484f66e"
 copied_at = "2026-09-28T12:12:38Z"
@@ -23,7 +23,7 @@ variants = ["fastapi"]
 
 [[sources]]
 path = "web/src/chanx-kit/notification"
-source = "github:huynguyengl99/chanx-kit@v0.4.0/ui/notification"
+source = "github:chanx-dev/chanx-kit@v0.4.0/ui/notification"
 ref = "v0.4.0"
 commit = "7f08fc9746f1408c80b15169da5c62469484f66e"
 copied_at = "2026-09-28T12:12:32Z"

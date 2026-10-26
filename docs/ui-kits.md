@@ -13,7 +13,7 @@ UI kits live in a second registry in the same repository. Add it once, next to t
 server one, pointing at your web app's source folder:
 
 ```bash
-uvx copit registry add chanx-kit-ui github:huynguyengl99/chanx-kit@v0.4.0 \
+uvx copit registry add chanx-kit-ui github:chanx-dev/chanx-kit@v0.4.0 \
   --index ui/copit-registry.json --to web/src/chanx-kit
 ```
 
@@ -34,7 +34,7 @@ work wherever `--to` puts them.
     Every UI kit is also published as a shadcn registry item (React variant):
 
     ```bash
-    npx shadcn add https://huynguyengl99.github.io/chanx-kit/r/notification.json
+    npx shadcn add https://kit.chanx.dev/r/notification.json
     ```
 
     Files land in `src/chanx-kit/<kit>/`.

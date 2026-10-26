@@ -24,8 +24,8 @@ COMPONENTS: dict[str, Any] = REGISTRY["components"]
 UI_COMPONENTS: dict[str, Any] = json.loads(
     (REPO_ROOT / "ui" / "copit-registry.json").read_text()
 )["components"]
-REPO_URL = "https://github.com/huynguyengl99/chanx-kit"
-SHADCN_URL = "https://huynguyengl99.github.io/chanx-kit/r"
+REPO_URL = "https://github.com/chanx-dev/chanx-kit"
+SHADCN_URL = "https://kit.chanx.dev/r"
 
 
 def manifest(component: dict[str, Any]) -> dict[str, Any]:
@@ -517,7 +517,7 @@ ui_index = [
     " `--chanx-*` variables. Set the registry up once, choosing your framework:",
     "",
     "```bash",
-    "copit registry add chanx-kit-ui github:huynguyengl99/chanx-kit@<tag> \\",
+    "copit registry add chanx-kit-ui github:chanx-dev/chanx-kit@<tag> \\",
     "  --index ui/copit-registry.json --to web/src/chanx-kit --variant react",
     "copit add @chanx-kit/notification @chanx-kit-ui/notification",
     "```",

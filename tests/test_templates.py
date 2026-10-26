@@ -30,7 +30,7 @@ def test_the_registry_is_pinned_to_a_release(template: Path) -> None:
     config = tomllib.loads((template / "copit.toml").read_text())
     source = config["registries"]["chanx-kit"]["source"]
 
-    assert source.startswith("github:huynguyengl99/chanx-kit@v"), (
+    assert source.startswith("github:chanx-dev/chanx-kit@v"), (
         f"{template.name}: the registry should be pinned to a release tag, got {source}"
     )
 

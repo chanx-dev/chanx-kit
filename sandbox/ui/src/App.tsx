@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 
 import { DEMOS, type Providers } from './demos';
 
-const DOCS = 'https://huynguyengl99.github.io/chanx-kit';
-const SOURCE = 'https://github.com/huynguyengl99/chanx-kit/blob/main/sandbox/consumers.py';
+const DOCS = 'https://kit.chanx.dev';
+const SOURCE = 'https://github.com/chanx-dev/chanx-kit/blob/main/sandbox/consumers.py';
 const GROUPS = [...new Set(DEMOS.map((demo) => demo.group))];
 
 /** The demo in the URL hash (`#/voice-agent`), so each one can be linked to. */

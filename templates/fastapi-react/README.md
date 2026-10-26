@@ -1,8 +1,8 @@
 # chanx app
 
-FastAPI on [chanx](https://github.com/huynguyengl99/chanx) and React on
-[chanx-js](https://github.com/huynguyengl99/chanx-js), with the
-[chanx-kit](https://github.com/huynguyengl99/chanx-kit) `notification` kit wired end to
+FastAPI on [chanx](https://github.com/chanx-dev/chanx) and React on
+[chanx-js](https://github.com/chanx-dev/chanx-js), with the
+[chanx-kit](https://github.com/chanx-dev/chanx-kit) `notification` kit wired end to
 end. The client is typed from the server's AsyncAPI schema.
 
 Needs [uv](https://docs.astral.sh/uv/) and Node 20.19+.
@@ -56,7 +56,7 @@ uvx copit add @chanx-kit/room-chat @chanx-kit-ui/chat
    with `useNotifications`.
 
 Kits by feature, with the command for each:
-https://huynguyengl99.github.io/chanx-kit/kits/#by-feature
+https://kit.chanx.dev/kits/#by-feature
 
 ## Auth
 

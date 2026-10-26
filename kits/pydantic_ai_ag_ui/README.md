@@ -7,7 +7,7 @@ Run a [Pydantic AI](https://ai.pydantic.dev) agent over the
 copit add @chanx-kit/pydantic-ai-ag-ui
 ```
 
-Builds on the [`ag-ui`](https://huynguyengl99.github.io/chanx-kit/kits/ag-ui/) kit,
+Builds on the [`ag-ui`](https://kit.chanx.dev/kits/ag-ui/) kit,
 which carries the protocol. This kit supplies the agent, the conversation, and the
 approval round trip.
 
@@ -82,7 +82,7 @@ conversation server-side instead, so `messages` carries only the new turn — wh
 what makes a resumed approval work with `"messages": []`.
 
 Persistence comes from the
-[`conversation-store`](https://huynguyengl99.github.io/chanx-kit/kits/conversation-store/)
+[`conversation-store`](https://kit.chanx.dev/kits/conversation-store/)
 kit, which holds an opaque string so one backend serves every agent framework. This kit
 converts at the edge with `ModelMessagesTypeAdapter`.
 
@@ -148,7 +148,7 @@ class TaskletTopic(PydanticAIAgUiTopic):
     broadcast_run_events = True
 ```
 
-See [that kit's README](https://huynguyengl99.github.io/chanx-kit/kits/ag-ui/) for
+See [that kit's README](https://kit.chanx.dev/kits/ag-ui/) for
 what the client owes you in return.
 
 ## Customise

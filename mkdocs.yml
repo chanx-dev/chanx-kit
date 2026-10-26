@@ -1,8 +1,8 @@
 site_name: chanx-kit
 site_description: A collection of composable, copy-in WebSocket kits for chanx.
-site_url: https://huynguyengl99.github.io/chanx-kit/
-repo_url: https://github.com/huynguyengl99/chanx-kit
-repo_name: huynguyengl99/chanx-kit
+site_url: https://kit.chanx.dev/
+repo_url: https://github.com/chanx-dev/chanx-kit
+repo_name: chanx-dev/chanx-kit
 edit_uri: edit/main/
 copyright: MIT licensed
 # The brand guide sits next to the assets for people browsing the repo; it is not a page.
@@ -88,7 +88,7 @@ extra_javascript:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/huynguyengl99/chanx-kit
+      link: https://github.com/chanx-dev/chanx-kit
 
 watch:
   - kits

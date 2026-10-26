@@ -6,7 +6,7 @@ hide:
 # ![chanx-kit](assets/brand/chanx-kit-wordmark.svg#only-light){ .hero-wordmark } ![chanx-kit](assets/brand/chanx-kit-wordmark-dark.svg#only-dark){ .hero-wordmark }
 
 *Pronounced "chan-X kit": a collection of composable, copy-in WebSocket kits for
-[chanx](https://github.com/huynguyengl99/chanx) (**CHAN**nels-e**X**tension).*
+[chanx](https://github.com/chanx-dev/chanx) (**CHAN**nels-e**X**tension).*
 
 Instead of installing a framework that owns your consumers, you copy a kit into your
 project and own it. No hidden abstractions, no dependency you cannot inspect, and an
@@ -47,7 +47,7 @@ install footprint that is exactly what you used.
 ## Start a new project
 
 ```bash
-uvx copit create gh:huynguyengl99/chanx-kit@main/templates/fastapi-react my-app
+uvx copit create gh:chanx-dev/chanx-kit@main/templates/fastapi-react my-app
 ```
 
 FastAPI and React, with the notification kit wired end to end.

@@ -1,19 +1,19 @@
 <h1>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/huynguyengl99/chanx-kit/main/docs/assets/brand/chanx-kit-wordmark-dark.svg">
-    <img alt="chanx-kit" src="https://raw.githubusercontent.com/huynguyengl99/chanx-kit/main/docs/assets/brand/chanx-kit-wordmark.svg" height="64">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/chanx-dev/chanx-kit/main/docs/assets/brand/chanx-kit-wordmark-dark.svg">
+    <img alt="chanx-kit" src="https://raw.githubusercontent.com/chanx-dev/chanx-kit/main/docs/assets/brand/chanx-kit-wordmark.svg" height="64">
   </picture>
 </h1>
 
 A collection of best-practice, reusable WebSocket components.
 
-[![CI](https://github.com/huynguyengl99/chanx-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/huynguyengl99/chanx-kit/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/python-3.11%20to%203.14-blue)](https://github.com/huynguyengl99/chanx-kit)
+[![CI](https://github.com/chanx-dev/chanx-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/chanx-dev/chanx-kit/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.11%20to%203.14-blue)](https://github.com/chanx-dev/chanx-kit)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-**[Documentation](https://huynguyengl99.github.io/chanx-kit/)** ·
-[Browse the kits](https://huynguyengl99.github.io/chanx-kit/kits/) ·
-[Getting started](https://huynguyengl99.github.io/chanx-kit/getting-started/)
+**[Documentation](https://kit.chanx.dev/)** ·
+[Browse the kits](https://kit.chanx.dev/kits/) ·
+[Getting started](https://kit.chanx.dev/getting-started/)
 
 Notifications, chat with replayed history, a presence roster, an agent streaming tokens
 to the browser: add the one you need, in a single command, and own the code it copies in.
@@ -31,7 +31,7 @@ uvx copit add @chanx-kit/notification
 - **Only the part you need.** Install one kit, not a framework. Your footprint is exactly
   what you used, and nothing is pulled in behind it.
 - **Django and FastAPI, same kit.** Kits import only framework-agnostic
-  [chanx](https://github.com/huynguyengl99/chanx), so the same component runs on Django
+  [chanx](https://github.com/chanx-dev/chanx), so the same component runs on Django
   Channels and on FastAPI / fast-channels.
 - **Production-shaped, not demo-shaped.** Authorization per subscription, pluggable
   persistence, and READMEs that say plainly which defaults are single-process. Every kit
@@ -58,10 +58,10 @@ A FastAPI backend and a React client with the notification kit already wired end
 the client typed from the server's schema:
 
 ```bash
-uvx copit create gh:huynguyengl99/chanx-kit@main/templates/fastapi-react my-app
+uvx copit create gh:chanx-dev/chanx-kit@main/templates/fastapi-react my-app
 ```
 
-No copit? `npx tiged huynguyengl99/chanx-kit/templates/fastapi-react my-app` copies the
+No copit? `npx tiged chanx-dev/chanx-kit/templates/fastapi-react my-app` copies the
 same folder. Either way the project comes with its own `copit.toml`, so adding kits works
 from the first `cd`.
 
@@ -83,7 +83,7 @@ records where kits come from and where they land, in `copit.toml`:
 
 ```bash
 uvx copit init
-uvx copit registry add chanx-kit github:huynguyengl99/chanx-kit@v0.4.0 --to app/ws_kits
+uvx copit registry add chanx-kit github:chanx-dev/chanx-kit@v0.4.0 --to app/ws_kits
 ```
 
 **Add a kit.** The source is copied into `app/ws_kits/notification/`, along with any kit
@@ -112,13 +112,13 @@ await UserNotificationTopic.notify_user(
 ```
 
 From here, the
-[getting started guide](https://huynguyengl99.github.io/chanx-kit/getting-started/)
+[getting started guide](https://kit.chanx.dev/getting-started/)
 covers subscribing from a client, composing several kits, and overriding a kit's hooks.
 
 ## What you can build
 
 One command per feature, server and browser halves together. Set up the UI registry
-once as well ([UI kits](https://huynguyengl99.github.io/chanx-kit/ui-kits/)).
+once as well ([UI kits](https://kit.chanx.dev/ui-kits/)).
 
 | Feature | Install |
 |---|---|
@@ -137,7 +137,7 @@ keyless `fake-voice`) fits the same UI. Mixing registries with `--only` needs co
 
 Stores, a Redis-backed roster, a Django-backed message store and the test harness are
 kits too. See [kits/](kits) and [ui/](ui) in this repository, or
-**[browse them all](https://huynguyengl99.github.io/chanx-kit/kits/)** with their
+**[browse them all](https://kit.chanx.dev/kits/)** with their
 messages, hooks and caveats.
 
 ## Try the demo

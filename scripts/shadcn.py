@@ -11,7 +11,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 INDEX = REPO_ROOT / "ui" / "copit-registry.json"
-BASE_URL = "https://huynguyengl99.github.io/chanx-kit/r"
+BASE_URL = "https://kit.chanx.dev/r"
 # `~` is the project root in shadcn; matches copit's `src/chanx-kit` target.
 TARGET = "~/src/chanx-kit"
 

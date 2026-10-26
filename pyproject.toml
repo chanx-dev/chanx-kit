@@ -92,9 +92,9 @@ django = ["chanx[channels]>=2.10.2,<3"]
 fastapi = ["chanx[fast_channels]>=2.10.2,<3"]
 
 [project.urls]
-Documentation = "https://github.com/huynguyengl99/chanx-kit#readme"
-Homepage = "https://github.com/huynguyengl99/chanx-kit"
-Repository = "https://github.com/huynguyengl99/chanx-kit"
+Documentation = "https://github.com/chanx-dev/chanx-kit#readme"
+Homepage = "https://github.com/chanx-dev/chanx-kit"
+Repository = "https://github.com/chanx-dev/chanx-kit"
 
 [tool.commitizen]
 name = "cz_conventional_commits"

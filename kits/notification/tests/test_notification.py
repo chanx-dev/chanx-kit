@@ -80,7 +80,12 @@ async def test_another_users_notifications_cannot_even_be_subscribed(app: Any) -
         denied = await comm.subscribe("notification:user:99")
 
         assert denied["action"] == "error"
-        assert denied["payload"]["reason"] == "unauthorized"
+        # chanx 2.14 sends an RFC 9457 problem; earlier versions a reason.
+        payload = denied["payload"]
+        assert payload.get("type", payload.get("reason")) in (
+            "https://chanx.dev/errors/unauthorized",
+            "unauthorized",
+        )
 
         await RecordingUserTopic.notify_user("99", NotificationPayload(title="No"))
         await assert_silent(comm)

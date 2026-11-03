@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "name": "chanx-kit-go",
+  "title": "chanx-kit Go",
+  "description": "Copy-in WebSocket components for chanx-go, speaking the same contracts as the Python kits.",
+  "source": "github:chanx-dev/chanx-kit",
+  "homepage": "https://github.com/chanx-dev/chanx-kit",
+  "ecosystem": "go",
+  "variants": [],
+  "install": {
+    "target": "internal/wskits",
+    "module_path": "go.chanx.dev/kit",
+    "exclude": [
+      "kit.yaml"
+    ],
+    "optional": {
+      "tests": [
+        "*_test.go",
+        "testdata/**"
+      ]
+    }
+  },
+  "components": {
+    "notification": {
+      "name": "notification",
+      "title": "Notification",
+      "description": "Fan out notifications to a user's live connections from anywhere in your app: an HTTP handler, a background worker, or another service.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "go/notification",
+      "tags": [
+        "notification",
+        "fanout",
+        "broadcast"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [],
+      "dependencies": [
+        "go.chanx.dev/v2@v2.1.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "messages.go",
+        "topics.go"
+      ],
+      "optional": {
+        "tests": [
+          "notification_test.go"
+        ]
+      }
+    },
+    "presence": {
+      "name": "presence",
+      "title": "Presence",
+      "description": "Track who is present in a room, document or tenant, and tell everyone when that changes. Pluggable store; ships with an in-process default.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "go/presence",
+      "tags": [
+        "presence",
+        "roster",
+        "online"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [],
+      "dependencies": [
+        "go.chanx.dev/v2@v2.1.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "messages.go",
+        "store.go",
+        "topics.go"
+      ],
+      "optional": {
+        "tests": [
+          "presence_test.go"
+        ]
+      }
+    },
+    "redis-presence-store": {
+      "name": "redis-presence-store",
+      "title": "Redis presence store",
+      "description": "Shared presence roster backed by Redis, so presence stays correct across several processes, and across Python, Go and Node servers on one Redis.",
+      "tier": "contrib",
+      "version": "0.1.0",
+      "path": "go/redispresencestore",
+      "tags": [
+        "presence",
+        "redis",
+        "scaling"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "presence"
+      ],
+      "dependencies": [
+        "go.chanx.dev/v2@v2.1.0",
+        "github.com/redis/go-redis/v9@v9.23.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "store.go"
+      ],
+      "optional": {
+        "tests": {
+          "include": [
+            "store_test.go"
+          ],
+          "dependencies": [
+            "github.com/alicebob/miniredis/v2@v2.40.0"
+          ]
+        }
+      }
+    },
+    "room-chat": {
+      "name": "room-chat",
+      "title": "Room chat",
+      "description": "A chat room: history replayed on connect, plus a live roster from the presence kit. Pluggable store, with an in-process default for demos and tests.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "go/roomchat",
+      "tags": [
+        "chat",
+        "rooms",
+        "history",
+        "persistence"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "presence"
+      ],
+      "dependencies": [
+        "go.chanx.dev/v2@v2.1.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "messages.go",
+        "store.go",
+        "topics.go"
+      ],
+      "optional": {
+        "tests": [
+          "roomchat_test.go"
+        ]
+      }
+    }
+  }
+}

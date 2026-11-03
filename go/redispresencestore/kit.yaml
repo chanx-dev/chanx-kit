@@ -1,0 +1,23 @@
+name: redis-presence-store
+title: Redis presence store
+description: >-
+  Shared presence roster backed by Redis, so presence stays correct across several
+  processes, and across Python, Go and Node servers on one Redis.
+version: 0.1.0
+tier: contrib
+role: store
+area: presence
+tags: [presence, redis, scaling]
+authors: ["Huy Nguyen <ndhgl99@gmail.com>"]
+
+requires:
+  - presence
+
+dependencies:
+  - "go.chanx.dev/v2@v2.1.0"
+  - "github.com/redis/go-redis/v9@v9.23.0"
+
+optional:
+  tests:
+    dependencies:
+      - "github.com/alicebob/miniredis/v2@v2.40.0"

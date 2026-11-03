@@ -1,0 +1,184 @@
+{
+  "version": 1,
+  "name": "chanx-kit-js",
+  "title": "chanx-kit JS",
+  "description": "Copy-in WebSocket components for chanx-js servers, speaking the same contracts as the Python kits.",
+  "source": "github:chanx-dev/chanx-kit",
+  "homepage": "https://github.com/chanx-dev/chanx-kit",
+  "ecosystem": "node",
+  "variants": [],
+  "install": {
+    "target": "src/ws-kits",
+    "exclude": [
+      "kit.yaml"
+    ],
+    "optional": {
+      "tests": [
+        "tests/**"
+      ]
+    }
+  },
+  "components": {
+    "notification": {
+      "name": "notification",
+      "title": "Notification",
+      "description": "Fan out notifications to a user's live connections from anywhere in your app: a request handler, a background worker, or another service.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "js/notification",
+      "tags": [
+        "notification",
+        "fanout",
+        "broadcast"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [],
+      "dependencies": [
+        "@chanx-js/server@^2.2.0",
+        "zod@^4.1.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "index.ts",
+        "messages.ts",
+        "topics.ts"
+      ],
+      "optional": {
+        "tests": {
+          "include": [
+            "tests/notification.test.ts"
+          ],
+          "dependencies": [
+            "vitest@^3.2.4"
+          ]
+        }
+      }
+    },
+    "presence": {
+      "name": "presence",
+      "title": "Presence",
+      "description": "Track who is present in a room, document or tenant, and tell everyone when that changes. Pluggable store; ships with an in-process default.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "js/presence",
+      "tags": [
+        "presence",
+        "roster",
+        "online"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [],
+      "dependencies": [
+        "@chanx-js/server@^2.2.0",
+        "zod@^4.1.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "index.ts",
+        "messages.ts",
+        "store.ts",
+        "topics.ts"
+      ],
+      "optional": {
+        "tests": {
+          "include": [
+            "tests/presence.test.ts"
+          ],
+          "dependencies": [
+            "vitest@^3.2.4"
+          ]
+        }
+      }
+    },
+    "redis-presence-store": {
+      "name": "redis-presence-store",
+      "title": "Redis presence store",
+      "description": "Shared presence roster backed by Redis, so presence stays correct across several processes, and across Python, Go and Node servers on one Redis.",
+      "tier": "contrib",
+      "version": "0.1.0",
+      "path": "js/redis-presence-store",
+      "tags": [
+        "presence",
+        "redis",
+        "scaling"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "presence"
+      ],
+      "dependencies": [
+        "redis@^6.3.1"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "index.ts",
+        "store.ts"
+      ],
+      "optional": {
+        "tests": {
+          "include": [
+            "tests/redis-presence-store.test.ts"
+          ],
+          "dependencies": [
+            "vitest@^3.2.4"
+          ]
+        }
+      }
+    },
+    "room-chat": {
+      "name": "room-chat",
+      "title": "Room chat",
+      "description": "A chat room: history replayed on connect, plus a live roster from the presence kit. Pluggable store, with an in-process default for demos and tests.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "js/room-chat",
+      "tags": [
+        "chat",
+        "rooms",
+        "history",
+        "persistence"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "presence"
+      ],
+      "dependencies": [
+        "@chanx-js/server@^2.2.0",
+        "zod@^4.1.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "index.ts",
+        "messages.ts",
+        "store.ts",
+        "topics.ts"
+      ],
+      "optional": {
+        "tests": {
+          "include": [
+            "tests/room-chat.test.ts"
+          ],
+          "dependencies": [
+            "vitest@^3.2.4"
+          ]
+        }
+      }
+    }
+  }
+}

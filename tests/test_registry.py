@@ -144,7 +144,7 @@ def test_registry_json_is_committed_and_current() -> None:
     registry, _ = registry_module.build()
 
     generated = registry_module.serialise(registry)
-    committed = registry_module.SERVER.index.read_text()
+    committed = registry_module.PYTHON.index.read_text()
 
     assert committed == generated, (
         "copit-registry.json is stale — run: python scripts/registry.py build"
@@ -179,7 +179,7 @@ def test_tests_are_not_shipped_to_users() -> None:
 
 
 def test_registry_json_parses_as_the_documented_shape() -> None:
-    document = json.loads(registry_module.SERVER.index.read_text())
+    document = json.loads(registry_module.PYTHON.index.read_text())
 
     assert document["version"] == registry_module.SCHEMA_VERSION
     assert document["ecosystem"] == "python"
@@ -296,7 +296,7 @@ def test_every_kit_exposes_a_topic() -> None:
     for name, component in registry_module.build()[0].components.items():
         package = pathlib.Path(component["path"]).name
         try:
-            module = importlib.import_module(f"kits.{package}.topics")
+            module = importlib.import_module(f"python.{package}.topics")
         except ModuleNotFoundError:
             continue
 
@@ -308,7 +308,7 @@ def test_every_kit_exposes_a_topic() -> None:
             and obj is not Topic
             and obj.__module__ == module.__name__
         ]
-        assert topics, f"{name}: kits/{package}/topics.py declares no Topic"
+        assert topics, f"{name}: python/{package}/topics.py declares no Topic"
 
         for topic in topics:
             if "pattern" not in topic.__dict__:
@@ -320,33 +320,91 @@ def test_every_kit_exposes_a_topic() -> None:
             )
 
 
-def test_the_ui_registry_is_valid_and_current() -> None:
-    registry, problems = registry_module.build(registry_module.UI)
+@pytest.mark.parametrize(
+    "layout",
+    [registry_module.UI, registry_module.GO, registry_module.JS],
+    ids=lambda layout: layout.folder,
+)
+def test_each_other_registry_is_valid_and_current(
+    layout: registry_module.Layout,
+) -> None:
+    registry, problems = registry_module.build(layout)
 
     assert [str(p) for p in problems] == []
-    assert registry_module.UI.index.read_text() == registry_module.serialise(
-        registry
-    ), "ui/copit-registry.json is stale — run: python scripts/registry.py build"
+    assert layout.index.read_text() == registry_module.serialise(registry), (
+        f"{layout.folder}/copit-registry.json is stale; "
+        "run: python scripts/registry.py build"
+    )
+
+
+def test_the_root_index_is_the_python_one_plus_the_catalog() -> None:
+    registries = [
+        registry_module.build(layout)[0] for layout in registry_module.LAYOUTS
+    ]
+    python = registries[0]
+
+    root = registry_module.ROOT_INDEX.read_text()
+
+    assert root == registry_module.serialise(
+        python, registry_module.catalog(registries)
+    )
+    assert json.loads(root)["registries"] == {
+        "chanx-kit": "python/copit-registry.json",
+        "chanx-kit-ui": "ui/copit-registry.json",
+        "chanx-kit-go": "go/copit-registry.json",
+        "chanx-kit-js": "js/copit-registry.json",
+    }
+
+
+def all_registries() -> list[registry_module.Registry]:
+    return [registry_module.build(layout)[0] for layout in registry_module.LAYOUTS]
 
 
 def test_every_contract_reference_resolves() -> None:
-    server, _ = registry_module.build(registry_module.SERVER)
-    ui, _ = registry_module.build(registry_module.UI)
-
-    assert registry_module.contract_problems(server, ui) == []
+    assert registry_module.contract_problems(all_registries()) == []
 
 
 def test_a_stale_contract_version_names_the_current_one() -> None:
-    server, _ = registry_module.build(registry_module.SERVER)
+    python, _ = registry_module.build(registry_module.PYTHON)
     ui = registry_module.Registry(
-        config={}, contracts={"feed": {"consumes": ["notification@0"]}}
+        config={},
+        contracts={"feed": {"consumes": ["notification@0"]}},
+        layout=registry_module.UI,
     )
 
-    problems = [str(p) for p in registry_module.contract_problems(server, ui)]
+    problems = [str(p) for p in registry_module.contract_problems([python, ui])]
 
     assert problems == [
         "feed: consumes 'notification@0', which no kit defines; "
         "the current version is notification@1"
+    ]
+
+
+@pytest.mark.parametrize("layout", [registry_module.GO, registry_module.JS])
+def test_only_python_kits_define_contracts(layout: registry_module.Layout) -> None:
+    python, _ = registry_module.build(registry_module.PYTHON)
+    port = registry_module.Registry(
+        config={}, contracts={"feed": {"defines": "feed@1"}}, layout=layout
+    )
+
+    problems = [str(p) for p in registry_module.contract_problems([python, port])]
+
+    assert any("contracts are defined by Python kits" in p for p in problems)
+
+
+def test_a_port_implements_what_python_defines() -> None:
+    python, _ = registry_module.build(registry_module.PYTHON)
+    port = registry_module.Registry(
+        config={},
+        contracts={"notification": {"implements": ["chat@9"], "contract_topic": "T"}},
+        layout=registry_module.GO,
+    )
+
+    problems = [str(p) for p in registry_module.contract_problems([python, port])]
+
+    assert problems == [
+        "notification: implements 'chat@9', which no kit defines; "
+        "the current version is chat@1"
     ]
 
 

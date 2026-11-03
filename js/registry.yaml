@@ -1,0 +1,25 @@
+version: 1
+name: chanx-kit-js
+title: chanx-kit JS
+description: Copy-in WebSocket components for chanx-js servers, speaking the same contracts as the Python kits.
+source: github:chanx-dev/chanx-kit
+homepage: https://github.com/chanx-dev/chanx-kit
+
+ecosystem: node
+
+root: js
+default_tier: core
+
+variants: []
+
+tier_rules:
+  core: [core]
+  contrib: [core, contrib]
+
+install:
+  target: src/ws-kits
+  exclude:
+    - "kit.yaml"
+  optional:
+    tests:
+      - "tests/**"

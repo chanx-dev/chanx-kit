@@ -1,0 +1,28 @@
+version: 1
+name: chanx-kit-go
+title: chanx-kit Go
+description: Copy-in WebSocket components for chanx-go, speaking the same contracts as the Python kits.
+source: github:chanx-dev/chanx-kit
+homepage: https://github.com/chanx-dev/chanx-kit
+
+ecosystem: go
+
+root: go
+default_tier: core
+
+variants: []
+
+tier_rules:
+  core: [core]
+  contrib: [core, contrib]
+
+install:
+  target: internal/wskits
+  # Go kits import each other by this path; copit rewrites it to the project module.
+  module_path: go.chanx.dev/kit
+  exclude:
+    - "kit.yaml"
+  optional:
+    tests:
+      - "*_test.go"
+      - "testdata/**"

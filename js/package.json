@@ -1,0 +1,35 @@
+{
+  "name": "chanx-kit-js",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "contract": "tsx scripts/contract.ts",
+    "sandbox": "tsx sandbox/main.ts",
+    "sandbox:notify": "tsx sandbox/notify.ts"
+  },
+  "dependencies": {
+    "@chanx-js/server": "^2.2.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@chanx-js/layers": "^2.1.1",
+    "@fastify/static": "^10.1.8",
+    "@fastify/websocket": "^11.3.6",
+    "@hono/node-server": "^2.1.6",
+    "@types/express": "^5.0.6",
+    "@types/koa": "^3.0.3",
+    "@types/node": "^24.0.0",
+    "@types/ws": "^8.18.2",
+    "express": "^5.3.0",
+    "fastify": "^5.12.8",
+    "hono": "^4.13.16",
+    "koa": "^3.3.0",
+    "redis": "^6.3.1",
+    "sirv": "^3.0.2",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4",
+    "ws": "^8.22.1"
+  }
+}

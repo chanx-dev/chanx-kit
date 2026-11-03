@@ -44,7 +44,7 @@ repos:
         entry: uv run --group registry python scripts/registry.py check
         language: system
         pass_filenames: false
-        files: ^(kits/|ui/[^/]+/kit\.yaml$|(registry\.yaml|copit-registry\.json|ui/registry\.yaml|ui/copit-registry\.json)$|scripts/registry\.py$)
+        files: ^((python|go|js)/|ui/[^/]+/kit\.yaml$|((python|ui|go|js)/)?(registry\.yaml|copit-registry\.json)$|scripts/registry\.py$)
 
   - repo: meta
     hooks:

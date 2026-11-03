@@ -76,6 +76,17 @@
     "install": {
       "$ref": "#/$defs/install"
     },
+    "registries": {
+      "description": "Other registries in the same repository, by name, each the path of its index from the repository root. `copit registry add` without `--index` follows the one matching the project's ecosystem.",
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z0-9][a-z0-9._-]*$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
     "components": {
       "type": "object",
       "propertyNames": {
@@ -118,6 +129,11 @@
             "string",
             "null"
           ]
+        },
+        "module_path": {
+          "description": "Go import path the registry's files use for each other. copit rewrites it in copied .go files to the project's module (from go.mod) plus the install target.",
+          "type": "string",
+          "minLength": 1
         },
         "package_marker": {
           "description": "File created in every directory copit creates, for languages that need one.",

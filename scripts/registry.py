@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 """Build and validate the component registries.
 
-Two registries share this repo: the server kits (``registry.yaml`` plus every
-``kits/*/kit.yaml``, published as ``copit-registry.json``) and the UI kits
-(``ui/registry.yaml`` plus ``ui/*/kit.yaml``, published as ``ui/copit-registry.json``).
-Both indexes are committed so installs are a single HTTP GET and changes show up in
-PR diffs. Contracts (``defines`` / ``implements`` / ``consumes``) are checked across
-the two, and stay out of the indexes.
+One registry per folder (``python/``, ``ui/``, ``go/``, ``js/``): its ``registry.yaml``
+plus every ``*/kit.yaml``, published as that folder's ``copit-registry.json``. The root
+``copit-registry.json`` is the Python index plus a ``registries`` catalog, the default
+copit fetches. Contracts (``defines`` / ``implements`` / ``consumes``) are checked
+across all of them, and stay out of the indexes.
 
-    python scripts/registry.py build     # regenerate both indexes
+    python scripts/registry.py build     # regenerate every index
     python scripts/registry.py check     # validate, and fail if an index is stale
 """
 
@@ -37,29 +36,55 @@ CONTRACT = re.compile(r"^[a-z][a-z0-9-]*@[1-9][0-9]*$")
 class Layout:
     """What one registry's components look like on disk."""
 
-    manifest: Path
-    index: Path
+    folder: str
+    # Globs that must each match a file in every kit.
     required_files: tuple[str, ...]
     test_glob: str
-    # A Python kit's directory is the package name a user imports.
-    underscore_dirs: bool
+    # Separator a kit's directory uses in place of the id's dashes.
+    dir_separator: str
+    # Only Python kits define contracts; the others implement or consume them.
+    defines_contracts: bool = False
+
+    @property
+    def manifest(self) -> Path:
+        return REPO_ROOT / self.folder / "registry.yaml"
+
+    @property
+    def index(self) -> Path:
+        return REPO_ROOT / self.folder / "copit-registry.json"
+
+    def directory_for(self, name: str) -> str:
+        return name.replace("-", self.dir_separator)
 
 
-SERVER = Layout(
-    manifest=REPO_ROOT / "registry.yaml",
-    index=REPO_ROOT / "copit-registry.json",
+PYTHON = Layout(
+    folder="python",
     required_files=("__init__.py", "README.md"),
     test_glob="tests/test_*.py",
-    underscore_dirs=True,
+    dir_separator="_",
+    defines_contracts=True,
 )
 UI = Layout(
-    manifest=REPO_ROOT / "ui" / "registry.yaml",
-    index=REPO_ROOT / "ui" / "copit-registry.json",
+    folder="ui",
     required_files=("README.md", "core.ts", "index.ts"),
     test_glob="tests/*.test.ts",
-    underscore_dirs=False,
+    dir_separator="-",
 )
-LAYOUTS = (SERVER, UI)
+GO = Layout(
+    folder="go",
+    required_files=("README.md", "*.go"),
+    test_glob="*_test.go",
+    dir_separator="",
+)
+JS = Layout(
+    folder="js",
+    required_files=("README.md", "index.ts"),
+    test_glob="tests/*.test.ts",
+    dir_separator="-",
+)
+LAYOUTS = (PYTHON, UI, GO, JS)
+SERVER_LAYOUTS = (PYTHON, GO, JS)
+ROOT_INDEX = REPO_ROOT / "copit-registry.json"
 
 
 @dataclass
@@ -78,7 +103,7 @@ class Registry:
     components: dict[str, dict[str, Any]] = field(default_factory=dict)
     # Kept out of the published index.
     contracts: dict[str, dict[str, Any]] = field(default_factory=dict)
-    layout: Layout = SERVER
+    layout: Layout = PYTHON
 
 
 def load_yaml(path: Path) -> dict[str, Any]:
@@ -242,11 +267,11 @@ def build_parts(
     return parts, problems
 
 
-def build(layout: Layout = SERVER) -> tuple[Registry, list[Problem]]:
+def build(layout: Layout = PYTHON) -> tuple[Registry, list[Problem]]:
     config = load_yaml(layout.manifest)
     problems: list[Problem] = []
 
-    root = REPO_ROOT / str(config.get("root", "kits"))
+    root = REPO_ROOT / str(config.get("root", layout.folder))
     install = config.get("install", {})
     excludes = list(install.get("exclude", []))
     optional_groups: dict[str, list[str]] = {
@@ -269,7 +294,7 @@ def build(layout: Layout = SERVER) -> tuple[Registry, list[Problem]]:
             continue
         name = str(name)
 
-        expected_dir = name.replace("-", "_") if layout.underscore_dirs else name
+        expected_dir = layout.directory_for(name)
         if directory.name != expected_dir:
             problems.append(
                 Problem(
@@ -286,7 +311,9 @@ def build(layout: Layout = SERVER) -> tuple[Registry, list[Problem]]:
         seen_directories[name] = directory.name
 
         for required in layout.required_files:
-            if not (directory / required).exists():
+            if not any(
+                not path.name.endswith("_test.go") for path in directory.glob(required)
+            ):
                 problems.append(Problem(name, f"is missing {required}"))
         if data.get("consumes") and not (directory / "contract.ts").exists():
             problems.append(Problem(name, "consumes a contract but has no contract.ts"))
@@ -423,12 +450,11 @@ def find_cycles(registry: Registry) -> list[Problem]:
     return problems
 
 
-def contract_problems(server: Registry, ui: Registry) -> list[Problem]:
-    """Every ``implements`` / ``consumes`` names a contract a server kit defines."""
+def defined_contracts(python: Registry) -> tuple[dict[str, str], list[Problem]]:
+    """``name@version`` -> the Python kit defining it."""
     problems: list[Problem] = []
     defined: dict[str, str] = {}
-
-    for name, meta in server.contracts.items():
+    for name, meta in python.contracts.items():
         contract = meta.get("defines")
         if contract is None:
             if "contract_topic" in meta:
@@ -449,10 +475,36 @@ def contract_problems(server: Registry, ui: Registry) -> list[Problem]:
                 )
             )
         defined[str(contract)] = name
+    return defined, problems
 
+
+def port_problems(registry: Registry) -> list[Problem]:
+    """A Go, JS or UI kit implements or consumes contracts, never defines one."""
+    problems: list[Problem] = []
+    for name, meta in registry.contracts.items():
+        if "defines" in meta:
+            problems.append(
+                Problem(
+                    name,
+                    f"defines {meta['defines']}; contracts are defined by Python "
+                    "kits, implement it instead",
+                )
+            )
+        if "contract_topic" in meta and not meta.get("implements"):
+            problems.append(Problem(name, "has contract_topic but implements nothing"))
+    return problems
+
+
+def contract_problems(registries: list[Registry]) -> list[Problem]:
+    """Every ``implements`` / ``consumes`` names a contract a Python kit defines."""
+    python = next(r for r in registries if r.layout.defines_contracts)
+    defined, problems = defined_contracts(python)
     names = {contract.split("@")[0]: contract for contract in defined}
 
-    def check(registry: Registry, key: str) -> None:
+    for registry in registries:
+        if registry is not python:
+            problems.extend(port_problems(registry))
+        key = "implements" if registry.layout in SERVER_LAYOUTS else "consumes"
         for name, meta in registry.contracts.items():
             for contract in meta.get(key) or []:
                 if contract in defined:
@@ -462,13 +514,10 @@ def contract_problems(server: Registry, ui: Registry) -> list[Problem]:
                 problems.append(
                     Problem(name, f"{key} {contract!r}, which no kit defines{hint}")
                 )
-
-    check(server, "implements")
-    check(ui, "consumes")
     return problems
 
 
-def serialise(registry: Registry) -> str:
+def serialise(registry: Registry, catalog: dict[str, str] | None = None) -> str:
     config = registry.config
     document = {
         "version": SCHEMA_VERSION,
@@ -481,9 +530,18 @@ def serialise(registry: Registry) -> str:
         "variants": list(config.get("variants", [])),
         **({"detect": config["detect"]} if config.get("detect") else {}),
         "install": config.get("install", {}),
+        **({"registries": catalog} if catalog else {}),
         "components": dict(sorted(registry.components.items())),
     }
     return json.dumps(document, indent=2, sort_keys=False) + "\n"
+
+
+def catalog(registries: list[Registry]) -> dict[str, str]:
+    """Registry name -> its index, relative to the repo root."""
+    return {
+        str(r.config["name"]): r.layout.index.relative_to(REPO_ROOT).as_posix()
+        for r in registries
+    }
 
 
 def schema_problems(document: dict[str, Any]) -> list[Problem]:
@@ -518,7 +576,7 @@ def main() -> int:
         registry, found = build(layout)
         registries.append(registry)
         problems.extend(found)
-    problems.extend(contract_problems(*registries))
+    problems.extend(contract_problems(registries))
 
     if problems:
         print(f"Registry has {len(problems)} problem(s):", file=sys.stderr)
@@ -528,14 +586,20 @@ def main() -> int:
 
     status = 0
     for registry in registries:
-        status |= publish(registry, args.command)
+        status |= publish(registry, args.command, registry.layout.index)
+    python = registries[LAYOUTS.index(PYTHON)]
+    status |= publish(python, args.command, ROOT_INDEX, catalog(registries))
     return status
 
 
-def publish(registry: Registry, command: str) -> int:
-    index = registry.layout.index
+def publish(
+    registry: Registry,
+    command: str,
+    index: Path,
+    registries: dict[str, str] | None = None,
+) -> int:
     label = index.relative_to(REPO_ROOT).as_posix()
-    rendered = serialise(registry)
+    rendered = serialise(registry, registries)
 
     schema_issues = schema_problems(json.loads(rendered))
     if schema_issues:
@@ -564,7 +628,7 @@ def publish(registry: Registry, command: str) -> int:
         )
         return 1
 
-    print(f"{label} OK — {len(registry.components)} components.")
+    print(f"{label} OK, {len(registry.components)} components.")
     return 0
 
 

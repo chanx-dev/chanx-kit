@@ -1,0 +1,20 @@
+name: room-chat
+title: Room chat
+description: >-
+  A chat room: history replayed on connect, plus a live roster from the presence
+  kit. Pluggable store, with an in-process default for demos and tests.
+version: 0.1.0
+tier: core
+role: feature
+area: messaging
+tags: [chat, rooms, history, persistence]
+authors: ["Huy Nguyen <ndhgl99@gmail.com>"]
+
+requires:
+  - presence
+
+implements: [chat@1]
+contract_topic: RoomChatTopic
+
+dependencies:
+  - "go.chanx.dev/v2@v2.1.0"

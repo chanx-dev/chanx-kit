@@ -10,9 +10,13 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from app.consumers import AppUserNotificationTopic, NotificationConsumer
+from app.consumers import NotificationConsumer, QueryAuth
 from app.layers import setup_layers
-from app.ws_kits.notification import BroadcastNotificationTopic, NotificationPayload
+from app.ws_kits.notification import (
+    BroadcastNotificationTopic,
+    NotificationPayload,
+    UserNotificationTopic,
+)
 
 setup_layers()
 
@@ -45,7 +49,7 @@ class NotifyRequest(BaseModel):
 async def notify(request: NotifyRequest) -> dict[str, str]:
     payload = NotificationPayload(title=request.title, body=request.body)
     if request.user:
-        await AppUserNotificationTopic.notify_user(request.user, payload)
+        await UserNotificationTopic.notify_user(request.user, payload)
         return {"sent_to": request.user}
     await BroadcastNotificationTopic.notify_all(payload)
     return {"sent_to": "everyone"}
@@ -53,6 +57,7 @@ async def notify(request: NotifyRequest) -> dict[str, str]:
 
 ws = FastAPI()
 ws.router.add_websocket_route("/notifications", NotificationConsumer.as_asgi())
+ws.add_middleware(QueryAuth)
 app.mount("/ws", ws)
 
 # Serves the built UI (`npm --prefix web run build`).

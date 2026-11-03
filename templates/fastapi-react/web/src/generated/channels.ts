@@ -13,8 +13,8 @@ import type {
 
 export type NotificationsToServer = PingMessage;
 export type NotificationsToClient = PongMessage;
-export type NotificationAppUserNotificationTopicToServer = NotificationAckMessage;
-export type NotificationAppUserNotificationTopicToClient = NotificationAckedMessage | NotificationMessage;
+export type NotificationUserNotificationTopicToServer = NotificationAckMessage;
+export type NotificationUserNotificationTopicToClient = NotificationAckedMessage | NotificationMessage;
 export type NotificationBroadcastNotificationTopicToServer = NotificationAckMessage;
 export type NotificationBroadcastNotificationTopicToClient = NotificationAckedMessage | NotificationMessage;
 
@@ -24,9 +24,9 @@ export const notifications = defineChannel<NotificationsToServer, NotificationsT
   address: "/ws/notifications",
   heartbeat: true,
   topics: {
-    /** Notifications for one user: ``notification:user:<user_id>``. */
-    appUserNotificationTopic: defineTopic<NotificationAppUserNotificationTopicToServer, NotificationAppUserNotificationTopicToClient>()({
-      name: "app_user_notification_topic",
+    /** Notifications addressed to one user: ``notification:user:<user_id>``. */
+    userNotificationTopic: defineTopic<NotificationUserNotificationTopicToServer, NotificationUserNotificationTopicToClient>()({
+      name: "user_notification_topic",
       pattern: "notification:user:{user_id}",
     }),
     /** Notifications addressed to everyone: ``notification:all``. */

@@ -10,7 +10,7 @@ export function App() {
   const [who, setWho] = useState('chris');
 
   // One socket, two topics; the server authorizes each subscription.
-  const mine = notifications.topics.appUserNotificationTopic.with({ user_id: who });
+  const mine = notifications.topics.userNotificationTopic.with({ user_id: who });
   const { items, status, ackAll } = useNotifications(notifications, {
     queryParams: { as: who },
     topics: [mine, everyone],
@@ -21,9 +21,8 @@ export function App() {
       <header>
         <h1>chanx app</h1>
         <p>
-          A FastAPI backend with the <code>notification</code> kit, and a React client
-          generated from the server&apos;s AsyncAPI schema. Open a second tab to see a
-          broadcast reach both.
+          A server with the <code>notification</code> kit, and a React client generated
+          from its AsyncAPI schema. Open a second tab to see a broadcast reach both.
         </p>
         <label>
           Connect as
@@ -76,8 +75,8 @@ function SendForm({ who }: { who: string }) {
       </label>
       <button type="submit">Send</button>
       <p className="hint">
-        From another process: <code>python -m app.notify "Build finished"</code> (needs{' '}
-        <code>REDIS_URL</code>, see the README).
+        From another process: the <code>notify</code> command in the README (needs{' '}
+        <code>REDIS_URL</code>).
       </p>
     </form>
   );

@@ -60,5 +60,5 @@ https://kit.chanx.dev/kits/#by-feature
 
 ## Auth
 
-Users are identified by `?as=<name>`. Replace `AppUserNotificationTopic.current_user_id`
-in `app/consumers.py` with your auth.
+Users are identified by `?as=<name>`: `QueryAuth` in `app/consumers.py` puts them on the
+scope, where the kits read the user. Replace it with your auth.

@@ -19,7 +19,7 @@ const notifications = defineChannel()({
   address: '/ws/notifications',
   heartbeat: true,
   topics: {
-    user: defineTopic()({ name: 'app_user_notification_topic', pattern: 'notification:user:{user_id}' }),
+    user: defineTopic()({ name: 'user_notification_topic', pattern: 'notification:user:{user_id}' }),
     all: defineTopic()({ name: 'broadcast_notification_topic', pattern: 'notification:all' }),
   },
 });

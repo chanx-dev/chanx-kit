@@ -7,9 +7,12 @@ import argparse
 import asyncio
 import os
 
-from app.consumers import AppUserNotificationTopic
 from app.layers import setup_layers
-from app.ws_kits.notification import BroadcastNotificationTopic, NotificationPayload
+from app.ws_kits.notification import (
+    BroadcastNotificationTopic,
+    NotificationPayload,
+    UserNotificationTopic,
+)
 
 
 async def main() -> None:
@@ -29,7 +32,7 @@ async def main() -> None:
     payload = NotificationPayload(title=title, body="sent from app.notify")
 
     if args.user:
-        await AppUserNotificationTopic.notify_user(args.user, payload)
+        await UserNotificationTopic.notify_user(args.user, payload)
     else:
         await BroadcastNotificationTopic.notify_all(payload)
     print(f"Sent {title!r} to {args.user or 'everyone'}")

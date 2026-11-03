@@ -40,7 +40,7 @@ jobs:
           uv run --no-default-groups \
                  --extra ${{ matrix.backend }} \
                  --group dev-${{ matrix.backend }} --group registry \
-                 pytest kits tests -q
+                 pytest python tests -q
         env:
           CHANX_KIT_BACKEND: ${{ matrix.backend == 'django' && 'channels' || 'fast_channels' }}
 

@@ -59,10 +59,10 @@ def _needs_absent_package(kit: Path) -> bool:
         import importlib
 
         try:
-            importlib.import_module(f"kits.{kit.name}")
+            importlib.import_module(f"python.{kit.name}")
             _MISSING[kit] = False
         except ModuleNotFoundError as error:
-            _MISSING[kit] = not (error.name or "").startswith("kits")
+            _MISSING[kit] = not (error.name or "").startswith("python")
     return _MISSING[kit]
 
 
@@ -72,7 +72,7 @@ def pytest_ignore_collect(collection_path: Path) -> bool | None:
         for kit in RESTRICTED_KITS
     ):
         return True
-    kits = Path(__file__).parent / "kits"
+    kits = Path(__file__).parent / "python"
     for kit in (collection_path, *collection_path.parents):
         if kit.parent == kits and (kit / "kit.yaml").exists():
             return True if _needs_absent_package(kit) else None

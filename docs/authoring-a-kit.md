@@ -6,7 +6,7 @@ covers why the shape is what it is.
 ## The shape
 
 ```
-kits/<package_name>/
+python/<package_name>/
   kit.yaml               # registry metadata
   messages.py            # the wire contract
   topics.py              # the kit's Topic classes: handlers, auth, broadcasting

@@ -5,13 +5,13 @@ The index format is **copit's**, not ours. See
 `copit-registry.json`, `[registries.*]` and the JSON Schema. This page records the choices
 chanx-kit makes *within* that format, and why.
 
-`scripts/registry.py` generates `copit-registry.json` from `registry.yaml` plus every
-`kits/*/kit.yaml`, and validates the result against copit's schema
+`scripts/registry.py` generates `python/copit-registry.json` from `python/registry.yaml` plus every
+`python/*/kit.yaml`, and validates the result against copit's schema
 (`scripts/registry.schema.json`, a vendored copy) before writing it.
 
 ## Ids use dashes, directories use underscores
 
-`room-chat` is the id; `kits/room_chat/` is the directory.
+`room-chat` is the id; `python/room_chat/` is the directory.
 
 The directory name is what a user imports, so it has to be a valid Python identifier.
 The id appears on the command line, where dashes read better. CI checks that
@@ -23,7 +23,7 @@ copit add @chanx-kit/room-chat        # then: from .ws_kits.room_chat import ...
 
 ## Tier is metadata, not a directory
 
-Every kit sits directly in `kits/`. `tier: core` or `tier: contrib` lives in
+Every kit sits directly in `python/`. `tier: core` or `tier: contrib` lives in
 `kit.yaml`.
 
 Two reasons, and the second one is the load-bearing one:
@@ -45,7 +45,7 @@ Django models, migrations, admin and DRF views has nothing to port to fast-chann
 Those declare the variant they need:
 
 ```yaml
-# kits/django_message_store/kit.yaml
+# python/django_message_store/kit.yaml
 only_variants:
   - django
 ```
@@ -60,7 +60,7 @@ still unused here, because no kit needs a per-framework adapter:
 
 Two rules follow, both enforced by `scripts/registry.py`:
 
-- every name must appear in `registry.yaml`'s `variants`, otherwise the kit would be
+- every name must appear in `python/registry.yaml`'s `variants`, otherwise the kit would be
   uninstallable everywhere;
 - a kit may not depend on a more restricted kit than itself. An unrestricted kit
   requiring a Django-only one would promise an install copit will refuse.
@@ -93,7 +93,7 @@ it in a kit's `requires` would copy a test harness into every project, including
 that never asked for tests. So the kit declares it on the group instead:
 
 ```yaml
-# kits/presence/kit.yaml
+# python/presence/kit.yaml
 optional:
   tests:
     requires:
@@ -144,11 +144,11 @@ the contract. The metadata lives in `kit.yaml` only and is checked by
 `scripts/registry.py`; it never reaches the copit index.
 
 ```yaml
-# kits/notification/kit.yaml: the kit that owns the messages
+# python/notification/kit.yaml: the kit that owns the messages
 defines: notification@1
 contract_topic: NotificationTopicBase   # the topic class whose messages are the contract
 
-# kits/pydantic_ai_ag_ui/kit.yaml: a provider reusing another kit's messages
+# python/pydantic_ai_ag_ui/kit.yaml: a provider reusing another kit's messages
 implements: [ag-ui@1]
 
 # ui/notification/kit.yaml

@@ -1,8 +1,8 @@
 # Player
 
 Play what a server speaks, for any server speaking **synthesizer@1**:
-[`fake-voice`](../../kits/fake_voice) while you build,
-[`elevenlabs`](../../kits/elevenlabs) (or any provider kit's `tts` part) in production.
+[`fake-voice`](../../python/fake_voice) while you build,
+[`elevenlabs`](../../python/elevenlabs) (or any provider kit's `tts` part) in production.
 
 ```bash
 copit add @chanx-kit-ui/player

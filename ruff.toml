@@ -1,4 +1,4 @@
-src = ["src", "kits", "tests", "scripts"]
+src = ["src", "python", "tests", "scripts"]
 target-version = "py311"
 line-length = 88
 

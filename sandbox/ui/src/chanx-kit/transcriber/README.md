@@ -1,8 +1,8 @@
 # Transcriber
 
 Record from the microphone and show live captions, for any server speaking
-**transcriber@1**: [`fake-voice`](../../kits/fake_voice) while you build,
-[`deepgram`](../../kits/deepgram) (or any provider kit's `stt` part) in production. Switching
+**transcriber@1**: [`fake-voice`](../../python/fake_voice) while you build,
+[`deepgram`](../../python/deepgram) (or any provider kit's `stt` part) in production. Switching
 provider changes one server class, not this UI.
 
 ```bash

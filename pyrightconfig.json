@@ -1,6 +1,6 @@
 {
   "include": [
-    "kits",
+    "python",
     "scripts",
     "tests",
     "sandbox",
@@ -12,7 +12,7 @@
     "**/__pycache__",
     "**/node_modules",
     ".venv",
-    "kits/pipecat_bridge"
+    "python/pipecat_bridge"
   ],
   "typeCheckingMode": "strict",
   "pythonVersion": "3.11",
@@ -47,7 +47,7 @@
       "reportUnknownArgumentType": "none"
     },
     {
-      "root": "kits"
+      "root": "python"
     },
     {
       "root": "sandbox",

@@ -1,4 +1,4 @@
-# kits
+# Python kits
 
 Each subdirectory is one **kit**: a self-contained WebSocket component you copy into your
 project and then own.

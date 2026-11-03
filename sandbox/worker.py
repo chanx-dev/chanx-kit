@@ -18,7 +18,7 @@ import os
 import sys
 from uuid import uuid4
 
-from kits.ag_ui import AgUiRunTopic
+from python.ag_ui import AgUiRunTopic
 
 from ag_ui.core import (
     EventType,

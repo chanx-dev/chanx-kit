@@ -23,8 +23,8 @@ SERVER, UI = "@chanx-kit/", "@chanx-kit-ui/"
 DOCS = [
     "README.md",
     "docs/*.md",
-    "kits/README.md",
-    "kits/*/README.md",
+    "python/README.md",
+    "python/*/README.md",
     "ui/*/README.md",
     "templates/*/README.md",
 ]

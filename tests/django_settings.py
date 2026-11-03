@@ -11,7 +11,7 @@ INSTALLED_APPS = [
     "rest_framework",
     # Django-only kits are apps. They are only collected on this backend; see the
     # pytest_ignore_collect hook in the root conftest.
-    "kits.django_message_store",
+    "python.django_message_store",
 ]
 
 DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}}

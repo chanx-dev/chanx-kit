@@ -1,7 +1,7 @@
 # Voice agent
 
 Talk to an agent: an open microphone, live captions, the reply spoken as it streams,
-and interrupting by speaking. For the [voice-agent server kit](../../kits/voice_agent),
+and interrupting by speaking. For the [voice-agent server kit](../../python/voice_agent),
 or any server whose session speaks transcriber@1, synthesizer@1 and ag-ui@1 under one
 id. Installing it brings the transcriber, player and ag-ui UI kits.
 

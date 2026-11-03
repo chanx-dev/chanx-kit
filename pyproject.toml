@@ -107,7 +107,7 @@ version_provider = "pep621"
 [tool.coverage]
 
 [tool.coverage.run]
-source = ["kits"]
+source = ["python"]
 
 [tool.hatch.build.targets.sdist]
 include = ["src", "LICENSE", "README.md"]
@@ -120,7 +120,7 @@ packages = ["src/chanx_kit"]
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
 asyncio_mode = "auto"
-testpaths = ["tests", "kits"]
+testpaths = ["tests", "python"]
 
 [tool.uv]
 default-groups = ["dev", "dev-django", "dev-fastapi", "docs", "lint", "registry", "test"]

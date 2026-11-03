@@ -65,7 +65,12 @@ ALL = (
     Template("go", "gin", "gin", ("go.chanx.dev/adapters/gin/v2",)),
     Template("go", "echo", "Echo", ("go.chanx.dev/adapters/echo/v2",)),
     Template("go", "fiber", "Fiber", ("go.chanx.dev/adapters/fiber/v2",)),
-    Template("js", "express", "Express", ("express@^5.3.0", "@types/express@^5.0.6")),
+    Template(
+        "js",
+        "express",
+        "Express",
+        ("express@^5.3.0", "ws@^8.22.0", "@types/express@^5.0.6"),
+    ),
     Template(
         "js",
         "fastify",

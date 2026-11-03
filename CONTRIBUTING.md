@@ -18,16 +18,16 @@ should follow:
 Read a neighbouring kit before you start. Generated code that ignores the topic
 conventions or the message style will be sent back.
 
-Everything else follows from how kits are delivered: everything in `kits/` is copied into
+Everything else follows from how kits are delivered: everything in `python/` is copied into
 user projects, and nothing here is installed. A change reaches people only when they run
 `copit update`, and it must not silently break them. Runtime helpers live in chanx; the
-test harness is itself a kit (`kits/chanx_testing/`). A helper only one kit needs belongs
+test harness is itself a kit (`python/chanx_testing/`). A helper only one kit needs belongs
 in that kit.
 
 New kits start at `tier: contrib`. One that proves useful and stable is promoted to
 `core` by changing that one line: no move, no id change, and nothing breaks for anyone
 who already installed it. The flat layout is deliberate; see
-[kits/README.md](kits/README.md).
+[python/README.md](python/README.md).
 
 ## Setup
 
@@ -45,7 +45,7 @@ For the sandbox's cross-process demos and live provider checks, copy `.env.examp
 
 ## Checklist for a new kit
 
-1. `kits/<package_name>/` with a directory name that is a valid Python identifier
+1. `python/<package_name>/` with a directory name that is a valid Python identifier
    (`room_chat`, while its id is `room-chat`)
 2. `kit.yaml`, the registry metadata; see below
 3. `messages.py`, giving every message an action `Literal` and a Pydantic payload
@@ -69,8 +69,9 @@ index for a kit missing either.
 ## kit.yaml
 
 Each kit describes itself in one file. `scripts/registry.py` reads every
-`kits/*/kit.yaml` plus the repo-wide `registry.yaml`, and generates the committed
-`copit-registry.json` that the CLI fetches.
+`python/*/kit.yaml` plus `python/registry.yaml`, and generates the committed
+`python/copit-registry.json`, copied to the root `copit-registry.json` the CLI fetches by
+default.
 
 ```yaml
 name: room-chat
@@ -125,12 +126,12 @@ optional:
 - **optional**: what a file group needs in order to work, resolved only when someone
   installs with `--with <group>`. The `tests` group is where `chanx-testing` belongs,
   since a user who did not ask for tests should not get a test harness. Which files the
-  group contains is decided by `registry.yaml`, not here.
+  group contains is decided by `python/registry.yaml`, not here.
 - **only_variants**: the frameworks the kit needs. Omit it unless the kit truly cannot
   run on both; see below.
 
 Nothing about *which files get copied* lives here: the include and exclude rules, the
-`tests` optional group and the install target are registry-wide, in `registry.yaml`, and
+`tests` optional group and the install target are registry-wide, in `python/registry.yaml`, and
 the file list is materialised at build time. See
 [docs/registry-conventions.md](docs/registry-conventions.md) for those choices and why
 they are made once rather than per kit.
@@ -165,8 +166,8 @@ A provider plugs a vendor into a contract (`transcriber@1`, `synthesizer@1`, `ag
 - One kit per vendor, with a part per capability (`stt`, `tts`). A new capability is a
   new part, not a new kit.
 - Subclass the contract's topic and run its shared suite against it (`TranscriberContract`
-  and friends); see [writing a provider](kits/audio_stream_in/README.md#writing-a-provider).
-- Tests never call the vendor: fake its server, as `kits/deepgram/tests/fake_listen.py`
+  and friends); see [writing a provider](python/audio_stream_in/README.md#writing-a-provider).
+- Tests never call the vendor: fake its server, as `python/deepgram/tests/fake_listen.py`
   does.
 - Read the API key when it is used, never at import: an `api_key` class attribute with a
   `key()` falling back to the environment variable.
@@ -181,8 +182,8 @@ things, one framework at a time and across Python 3.11 to 3.14.
 ```bash
 uv run pre-commit run --all-files
 
-CHANX_KIT_BACKEND=fast_channels uv run pytest kits tests
-CHANX_KIT_BACKEND=channels      uv run pytest kits tests
+CHANX_KIT_BACKEND=fast_channels uv run pytest python tests
+CHANX_KIT_BACKEND=channels      uv run pytest python tests
 
 uv run pyright
 uv run python scripts/registry.py check
@@ -199,7 +200,7 @@ installs or the framework boundary:
 ```bash
 # one framework installed, which is what actually proves a kit does not need the other
 CHANX_KIT_BACKEND=channels uv run --no-default-groups \
-    --extra django --group dev-django --group registry pytest kits tests
+    --extra django --group dev-django --group registry pytest python tests
 
 uv run python scripts/conformance.py    # install every kit with copit and import it
 ```
@@ -215,6 +216,24 @@ sandbox's voice demos with Chrome's fake microphone (see its header for how to r
 A weekly job re-resolves every dependency to its newest version and runs the suite
 against it. Kits are copied, so upstream breakage reaches users through *their* next
 install rather than through a release here.
+
+## Go and JS kits
+
+`go/` and `js/` hold ports of Python kits, each its own registry. A port **implements**
+a contract a Python kit defines, never defines one, and keeps the Python names: types,
+topics and messages, so groups and generated clients match. Name its `contract_topic`
+in `kit.yaml` and add it to `go/internal/contract` or `js/scripts/contract.ts`; then
+`scripts/contracts.py check` fails on any drift from the Python kit's types.
+
+```bash
+(cd go && go vet ./... && go test ./...)
+npm ci --prefix js && npm run --prefix js typecheck && npm test --prefix js
+uv run --extra fastapi --group dev-fastapi python scripts/contracts.py check
+uv run python scripts/templates.py build    # after changing a kit the templates copy
+```
+
+Hooks are options, not subclasses: a struct field in Go, a factory option in JS. Go
+kit directories drop the id's dashes (`roomchat`), since they are package names.
 
 ## UI kits
 

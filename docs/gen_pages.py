@@ -24,6 +24,17 @@ COMPONENTS: dict[str, Any] = REGISTRY["components"]
 UI_COMPONENTS: dict[str, Any] = json.loads(
     (REPO_ROOT / "ui" / "copit-registry.json").read_text()
 )["components"]
+# Go and JS ports of the Python kits: folder, label, registry, install target, packages.
+PORT_LANGUAGES = {
+    "go": ("Go", "chanx-kit-go", "internal/wskits", "Go modules"),
+    "js": ("Node", "chanx-kit-js", "src/ws-kits", "npm packages"),
+}
+PORTS: dict[str, dict[str, Any]] = {
+    folder: json.loads((REPO_ROOT / folder / "copit-registry.json").read_text())[
+        "components"
+    ]
+    for folder in PORT_LANGUAGES
+}
 REPO_URL = "https://github.com/chanx-dev/chanx-kit"
 SHADCN_URL = "https://kit.chanx.dev/r"
 
@@ -232,7 +243,7 @@ def rewrite_links(markdown: str) -> str:
     replacements = {
         "../docs/authoring-a-kit.md": "../../authoring-a-kit.md",
         "../CONTRIBUTING.md": f"{REPO_URL}/blob/main/CONTRIBUTING.md",
-        "(kits/": f"({REPO_URL}/tree/main/kits/",
+        "(python/": f"({REPO_URL}/tree/main/python/",
     }
     for old, new in replacements.items():
         markdown = markdown.replace(old, new)
@@ -242,10 +253,10 @@ def rewrite_links(markdown: str) -> str:
 def kit_messages(package: str) -> dict[str, tuple[str, dict[str, Any]]]:
     """Message classes a kit defines, keyed by action."""
     try:
-        module = importlib.import_module(f"kits.{package}")
+        module = importlib.import_module(f"python.{package}")
     except ModuleNotFoundError as error:
         # A bridge kit whose library the docs build does not install.
-        if (error.name or "").startswith("kits"):
+        if (error.name or "").startswith("python"):
             raise
         return {}
     found: dict[str, tuple[str, dict[str, Any]]] = {}
@@ -259,6 +270,16 @@ def kit_messages(package: str) -> dict[str, tuple[str, dict[str, Any]]]:
         found[action] = (obj.__name__, obj.model_json_schema())
 
     return dict(sorted(found.items()))
+
+
+def port_links(name: str) -> list[str]:
+    """The Go and JS ports of a Python kit."""
+    ports = [
+        f"[{PORT_LANGUAGES[folder][0]}](../{folder}/{name}.md)"
+        for folder, components in PORTS.items()
+        if name in components
+    ]
+    return [f"| **Also on** | {', '.join(ports)} |"] if ports else []
 
 
 def kit_page(name: str, component: dict[str, Any]) -> str:
@@ -308,6 +329,7 @@ def kit_page(name: str, component: dict[str, Any]) -> str:
             f"or `copit add @chanx-kit/{name} --only <part>` |"
         )
     facts += contract_facts(component, ui=False)
+    facts += port_links(name)
     if dependencies:
         facts.append(
             "| **Python packages** | "
@@ -403,6 +425,92 @@ for name in sorted(COMPONENTS):
     )
 nav_lines.append("* [Kits](kits/index.md)")
 nav_lines += nav_groups(COMPONENTS, "kits/")
+
+
+# --- Go and JS kits -------------------------------------------------------------
+def port_page(folder: str, name: str, component: dict[str, Any]) -> str:
+    label, registry, target, packages = PORT_LANGUAGES[folder]
+    readme = (REPO_ROOT / component["path"] / "README.md").read_text()
+    body = re.sub(r"\A#\s+.*\n+", "", readme, count=1)
+    meta = manifest(component)
+    facts = [
+        "| | |",
+        "|---|---|",
+        f"| **Install** | `copit add @{registry}/{name}` |",
+        f"| **Import from** | `{target}/{Path(component['path']).name}` |",
+        f"| **Python kit** | [`{name}`](../kits/{name}.md) |",
+    ]
+    for contract in meta.get("implements") or []:
+        facts.append(f"| **Contract** | `{contract}` |")
+        if UIS_OF.get(contract):
+            facts.append(f"| **UI kits** | {link_list(UIS_OF[contract], '../ui/')} |")
+    if requires := component.get("requires"):
+        facts.append(f"| **Requires kits** | {link_list(requires, '')} |")
+    facts.append(
+        f"| **{packages}** | "
+        + ", ".join(f"`{d}`" for d in component["dependencies"])
+        + " |"
+    )
+    facts.append(
+        f"| **Source** | [{component['path']}]({REPO_URL}/tree/main/{component['path']}) |"
+    )
+    header = [
+        f"# {component['title']} for {label}",
+        "",
+        f'!!! info "{label} · v{component["version"]}"',
+        f"    {component['description']}",
+        "",
+    ]
+    tags = (
+        "---\ntags:\n"
+        + "".join(
+            f"  - {t}\n"
+            for t in [
+                *(AREAS[a] for a in areas_of(component)),
+                f"{label} kit",
+                *contracts_of(component),
+            ]
+        )
+        + "---\n\n"
+    )
+    return "\n".join([tags + "\n".join(header), "\n".join(facts), "", body])
+
+
+for folder, components in PORTS.items():
+    label, registry, target, _ = PORT_LANGUAGES[folder]
+    port_index = [
+        f"# {label} kits",
+        "",
+        f"The Python kits ported to chanx-{folder}, speaking the same contracts, so the"
+        " [UI kits](../ui/index.md) work unchanged. Set the registry up once; copit"
+        " copies the files, and the server's packages come with the kit:",
+        "",
+        "```bash",
+        f"copit registry add {registry} github:chanx-dev/chanx-kit@<tag> \\",
+        f"  --index {folder}/copit-registry.json --to {target}",
+        f"copit add @{registry}/notification @chanx-kit-ui/notification",
+        "```",
+        "",
+        "| Kit | Contract | Description |",
+        "|---|---|---|",
+    ]
+    for name in sorted(components):
+        contract = ", ".join(f"`{c}`" for c in contracts_of(components[name]))
+        port_index.append(
+            f"| [`{name}`]({name}.md) | {contract} | {components[name]['description']} |"
+        )
+    with mkdocs_gen_files.open(f"{folder}/index.md", "w") as handle:
+        handle.write("\n".join(port_index) + "\n")
+    for name in sorted(components):
+        with mkdocs_gen_files.open(f"{folder}/{name}.md", "w") as handle:
+            handle.write(port_page(folder, name, components[name]))
+        mkdocs_gen_files.set_edit_path(
+            f"{folder}/{name}.md", f"{components[name]['path']}/README.md"
+        )
+    nav_lines.append(f"* [{label} kits]({folder}/index.md)")
+    nav_lines += [
+        f"    * [{components[n]['title']}]({folder}/{n}.md)" for n in sorted(components)
+    ]
 
 
 # --- providers ------------------------------------------------------------------
@@ -559,12 +667,12 @@ nav_lines.append("* [Tags](tags.md)")
 contributing = (REPO_ROOT / "CONTRIBUTING.md").read_text()
 for old, new in {
     "(docs/": "(",
-    "(kits/README.md)": f"({REPO_URL}/blob/main/kits/README.md)",
+    "(python/README.md)": f"({REPO_URL}/blob/main/python/README.md)",
 }.items():
     contributing = contributing.replace(old, new)
 # A kit's README is its docs page there.
 contributing = re.sub(
-    r"\(kits/(\w+)/README\.md",
+    r"\(python/(\w+)/README\.md",
     lambda m: f"(kits/{m[1].replace('_', '-')}.md",
     contributing,
 )

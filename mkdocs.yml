@@ -91,5 +91,7 @@ extra:
       link: https://github.com/chanx-dev/chanx-kit
 
 watch:
-  - kits
+  - python
+  - go
+  - js
   - copit-registry.json

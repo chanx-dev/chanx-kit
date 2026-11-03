@@ -28,12 +28,13 @@ install footprint that is exactly what you used.
     pyright strict with no suppressions, and TypeScript types generated from the
     server's own AsyncAPI schema.
 
--   :material-swap-horizontal: **Django *and* FastAPI**
+-   :material-swap-horizontal: **Django, FastAPI, Go and Node**
 
     ---
 
     Kits import only `chanx.core`, so one component runs on Channels and
-    fast-channels. Every kit's tests run on both in CI.
+    fast-channels. The core kits are ported to [Go](go/index.md) and
+    [Node](js/index.md), checked in CI to speak the same messages.
 
 -   :material-puzzle: **Composable**
 
@@ -50,8 +51,8 @@ install footprint that is exactly what you used.
 uvx copit create gh:chanx-dev/chanx-kit@main/templates/fastapi-react my-app
 ```
 
-FastAPI and React, with the notification kit wired end to end.
-[Run it](getting-started.md#start-a-new-project).
+FastAPI and React, with the notification kit wired end to end. Go and Node versions
+come in one template per framework. [Run it](getting-started.md#start-a-new-project).
 
 ## Or add a kit in one minute
 

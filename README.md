@@ -33,6 +33,11 @@ uvx copit add @chanx-kit/notification
 - **Django and FastAPI, same kit.** Kits import only framework-agnostic
   [chanx](https://github.com/chanx-dev/chanx), so the same component runs on Django
   Channels and on FastAPI / fast-channels.
+- **Go and Node too.** Notification, presence and room chat are ported to
+  [chanx-go](https://github.com/chanx-dev/chanx-go) and
+  [chanx-js](https://github.com/chanx-dev/chanx-js), with the same messages and topic
+  names, checked in CI. The UI kits work against any of them, and the servers can share
+  one Redis.
 - **Production-shaped, not demo-shaped.** Authorization per subscription, pluggable
   persistence, and READMEs that say plainly which defaults are single-process. Every kit
   is tested on both backends and type-checked in strict mode.
@@ -67,6 +72,10 @@ from the first `cd`.
 
 Its [README](templates/fastapi-react/README.md) takes it from there: two commands to run
 it, and one to add the next kit.
+
+On Go or Node, pick the template for your framework: `go-nethttp-react`,
+`go-chi-react`, `go-gin-react`, `go-echo-react`, `go-fiber-react`, `express-react`,
+`fastify-react` or `hono-react`.
 
 ## Getting started
 
@@ -136,7 +145,7 @@ keyless `fake-voice`) fits the same UI. Mixing registries with `--only` needs co
 0.9.1 or later.
 
 Stores, a Redis-backed roster, a Django-backed message store and the test harness are
-kits too. See [kits/](kits) and [ui/](ui) in this repository, or
+kits too. See [python/](python), [go/](go), [js/](js) and [ui/](ui) in this repository, or
 **[browse them all](https://kit.chanx.dev/kits/)** with their
 messages, hooks and caveats.
 

@@ -26,7 +26,17 @@ away. Its README covers the rest: sending from another process, and where things
 No copit? `npx tiged chanx-dev/chanx-kit/templates/fastapi-react my-app` copies the
 same folder.
 
-The rest of this page adds kits to a project you already have.
+The same app, with the same React client, exists for Go and Node servers. Swap the
+template name:
+
+| Server | Templates |
+|---|---|
+| Python | `fastapi-react` |
+| Go ([chanx-go](https://go.chanx.dev/)) | `go-nethttp-react`, `go-chi-react`, `go-gin-react`, `go-echo-react`, `go-fiber-react` |
+| Node ([chanx-js](https://js.chanx.dev/)) | `express-react`, `fastify-react`, `hono-react` |
+
+Each one's README has its run commands. The rest of this page adds kits to a project you
+already have; [Go and Node](#go-and-node) covers what differs there.
 
 ## Install chanx
 
@@ -151,9 +161,52 @@ class TenantNotificationTopic(UserNotificationTopic):
 
 Each kit's page lists its hooks and their defaults.
 
+## Go and Node
+
+The kits that carry a contract (notification, presence, room chat) are ported to
+[chanx-go](https://go.chanx.dev/) and [chanx-js](https://js.chanx.dev/), with the same
+messages and topic names, so the UI kits work unchanged and a Python, Go and Node server
+on one Redis reach each other's clients. Each language is its own registry in this
+repository:
+
+=== "Go"
+
+    ```bash
+    uvx copit registry add chanx-kit-go github:chanx-dev/chanx-kit@<tag> \
+      --index go/copit-registry.json --to internal/wskits
+    uvx copit add @chanx-kit-go/notification
+    go mod tidy
+    ```
+
+    ```go
+    func (AppConsumer) Topics() []chanx.TopicHandler {
+    	return []chanx.TopicHandler{notification.UserNotificationTopic{}}
+    }
+
+    notification.NotifyUser(ctx, engine.Publisher(), user.ID,
+    	notification.NotificationPayload{Title: "Build finished"})
+    ```
+
+=== "Node"
+
+    ```bash
+    uvx copit registry add chanx-kit-js github:chanx-dev/chanx-kit@<tag> \
+      --index js/copit-registry.json --to src/ws-kits
+    uvx copit add @chanx-kit-js/notification
+    ```
+
+    ```ts
+    const app = consumer('/ws', { name: 'app', authenticate, topics: [UserNotificationTopic] });
+
+    await notifyUser(chanx, user.id, { title: 'Build finished' });
+    ```
+
+Hooks are options rather than subclasses there: a struct field in Go, a factory option in
+Node. [Go kits](go/index.md) and [Node kits](js/index.md) list them.
+
 ## Next
 
 - [UI kits](ui-kits.md): the browser half, React first
 - [Add voice](voice.md): captions, spoken replies and a voice agent
-- [Browse the kits](kits/index.md)
+- [Browse the kits](kits/index.md), or the [Go](go/index.md) and [Node](js/index.md) ones
 - [Authoring a kit](authoring-a-kit.md): what a topic is made of, and why

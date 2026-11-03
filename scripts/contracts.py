@@ -1,10 +1,13 @@
 #!/usr/bin/env python
-"""Generate each UI kit's ``contract.ts`` with the codegen apps use.
+"""Generate each UI kit's ``contract.ts`` with the codegen apps use, and check that
+every Go and JS kit implementing a contract generates the same types.
 
 python scripts/contracts.py build|check    # needs the fastapi extra and npm ci --prefix ui
+                                           # check also needs go and npm ci --prefix js
 """
 
 import argparse
+import difflib
 import importlib
 import re
 import subprocess
@@ -32,7 +35,7 @@ def load_yaml(path: Path) -> dict[str, Any]:
 def defined_contracts() -> dict[str, tuple[str, str]]:
     """``name@version`` -> (kit directory, contract topic class)."""
     found: dict[str, tuple[str, str]] = {}
-    for manifest in sorted((REPO_ROOT / "kits").glob("*/kit.yaml")):
+    for manifest in sorted((REPO_ROOT / "python").glob("*/kit.yaml")):
         data = load_yaml(manifest)
         if data.get("defines"):
             found[str(data["defines"])] = (
@@ -64,7 +67,7 @@ def asyncapi_for(kit: str, topic_name: str) -> str:
     from fastapi.responses import JSONResponse
     from fastapi.testclient import TestClient
 
-    base = getattr(importlib.import_module(f"kits.{kit}"), topic_name)
+    base = getattr(importlib.import_module(f"python.{kit}"), topic_name)
     # Same name as the base, so nothing kit-specific leaks into the generated names.
     contract_topic = type(topic_name, (base,), {"pattern": "contract"})
 
@@ -87,23 +90,66 @@ def asyncapi_for(kit: str, topic_name: str) -> str:
 
 
 UNION = re.compile(r"^export type Contract\w+?(ToServer|ToClient) = (.+);$", re.M)
+# Error payloads every chanx server documents; part of the protocol, not a contract.
+PROTOCOL_TYPES = re.compile(
+    r"^/\*\*[^\n]*\*/\nexport interface (?:ProblemDetails|ValidationFailure) \{.*?^\}\n\n?",
+    re.M | re.S,
+)
+DOC_COMMENT = re.compile(r"^[ \t]*/\*\*.*\*/\n", re.M)
+# Differences a server library cannot avoid yet: (language, kit) -> (Python's line, the port's).
+KNOWN_GAPS = {
+    # chanx-js requires a payload even when its schema has a default.
+    ("js", "room-chat"): [
+        (
+            "  payload?: ChatBacklogRequestPayload;",
+            "  payload: ChatBacklogRequestPayload;",
+        )
+    ],
+}
+# How each implementation prints the spec of an app hosting one kit's contract topic.
+PORT_SPECS = {
+    "go": (REPO_ROOT / "go", ["go", "run", "./internal/contract"]),
+    "js": (REPO_ROOT / "js", ["npx", "--no-install", "tsx", "scripts/contract.ts"]),
+}
 
 
-def render(kit: str, contract: str, topic_name: str) -> str:
+def python_spec(kit: str, topic_name: str) -> str:
+    # One process per contract: chanx registers consumers globally.
+    return subprocess.run(
+        [sys.executable, __file__, "spec", kit, topic_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+
+
+def port_spec(language: str, kit: str) -> str:
+    cwd, command = PORT_SPECS[language]
+    return subprocess.run(
+        [*command, kit], cwd=cwd, check=True, capture_output=True, text=True
+    ).stdout
+
+
+def implementations() -> list[tuple[str, str, str]]:
+    """``(language, kit id, contract)`` for every Go and JS kit implementing one."""
+    found: list[tuple[str, str, str]] = []
+    for language in PORT_SPECS:
+        for manifest in sorted((REPO_ROOT / language).glob("*/kit.yaml")):
+            data = load_yaml(manifest)
+            found += [
+                (language, str(data["name"]), str(c))
+                for c in data.get("implements") or []
+            ]
+    return found
+
+
+def render(kit: str, contract: str, spec_json: str) -> str:
     if not CODEGEN.exists():
         raise SystemExit(f"{CODEGEN} is missing. Run: npm ci --prefix ui")
 
     with tempfile.TemporaryDirectory() as tmp:
         spec = Path(tmp) / "asyncapi.json"
-        # One process per contract: chanx registers consumers globally.
-        spec.write_text(
-            subprocess.run(
-                [sys.executable, __file__, "spec", kit, topic_name],
-                check=True,
-                capture_output=True,
-                text=True,
-            ).stdout
-        )
+        spec.write_text(spec_json)
         out = Path(tmp) / "generated"
         subprocess.run(
             [str(CODEGEN), str(spec), "-o", str(out)],
@@ -115,6 +161,7 @@ def render(kit: str, contract: str, topic_name: str) -> str:
 
     unions = dict(UNION.findall(channels))
     body = schemas.split("\n", 3)[3].lstrip("\n")  # drop codegen's own header
+    body = PROTOCOL_TYPES.sub("", body)
     return (
         HEADER.format(kit=kit.replace("_", "-"), contract=contract)
         + "\n"
@@ -144,7 +191,7 @@ def main() -> int:
             print(f"{directory.name}: consumes undefined {contract}", file=sys.stderr)
             return 1
         kit, topic_name = defined[contract]
-        rendered = render(kit, contract, topic_name)
+        rendered = render(kit, contract, python_spec(kit, topic_name))
         target = directory / "contract.ts"
         if args.command == "build":
             target.write_text(rendered)
@@ -160,8 +207,39 @@ def main() -> int:
         )
         return 1
     if args.command == "check":
+        if drifted := port_drift(defined):
+            print("\n".join(drifted), file=sys.stderr)
+            return 1
         print("Contracts OK.")
     return 0
+
+
+def port_drift(defined: dict[str, tuple[str, str]]) -> list[str]:
+    """Go and JS kits whose contract types differ from the Python kit's."""
+    drifted: list[str] = []
+    for language, kit, contract in implementations():
+        python_kit, topic_name = defined[contract]
+        # Docs are not the wire: compare the types alone.
+        expected = DOC_COMMENT.sub(
+            "", render(python_kit, contract, python_spec(python_kit, topic_name))
+        )
+        actual = DOC_COMMENT.sub(
+            "", render(python_kit, contract, port_spec(language, kit))
+        )
+        for python_line, port_line in KNOWN_GAPS.get((language, kit), []):
+            expected = expected.replace(python_line, port_line)
+        if actual != expected:
+            diff = difflib.unified_diff(
+                expected.splitlines(),
+                actual.splitlines(),
+                f"python/{python_kit}",
+                f"{language}/{kit}",
+                lineterm="",
+            )
+            drifted.append(
+                f"{language}/{kit} drifts from {contract}:\n" + "\n".join(diff)
+            )
+    return drifted
 
 
 if __name__ == "__main__":

@@ -3,8 +3,8 @@ import { usePresence } from '../chanx-kit/presence/react';
 import { room } from '../generated';
 
 const ROOM = 'general';
-const chat = room.topics.demoChatTopic.with({ room: ROOM });
-const presence = room.topics.demoPresenceTopic.with({ scope: ROOM });
+const chat = room.topics.roomChatTopic.with({ room: ROOM });
+const presence = room.topics.presenceTopic.with({ scope: ROOM });
 
 /** Two independent kits, chat and presence, over a single connection. */
 export function RoomPanel({ who }: { who: string }) {

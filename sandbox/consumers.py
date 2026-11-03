@@ -7,6 +7,7 @@ UI and the TypeScript generator both read from.
 import asyncio
 import os
 from collections.abc import AsyncIterator
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, ClassVar
 from uuid import uuid4
 
@@ -16,27 +17,27 @@ from chanx.fast_channels.websocket import AsyncJsonWebsocketConsumer
 from chanx.messages.incoming import PingMessage
 from chanx.messages.outgoing import PongMessage
 from chanx.utils.scope import query_params
-from kits.ag_ui import AgUiEventMessage, AgUiRunTopic, AgUiTopic
-from kits.audio_stream_in import (
+from python.ag_ui import AgUiEventMessage, AgUiRunTopic, AgUiTopic
+from python.audio_stream_in import (
     TranscriptFinalMessage,
     TranscriptTopic,
 )
-from kits.fake_voice.synthesizer import FakeSynthesizerTopic
-from kits.fake_voice.transcriber import FakeTranscriberTopic
-from kits.notification import (
+from python.fake_voice.synthesizer import FakeSynthesizerTopic
+from python.fake_voice.transcriber import FakeTranscriberTopic
+from python.notification import (
     BroadcastNotificationTopic,
     NotificationMessage,
     SubjectNotificationTopic,
     UserNotificationTopic,
 )
-from kits.presence import (
+from python.presence import (
     PresenceJoinMessage,
     PresenceLeaveMessage,
-    PresenceMember,
     PresenceTopic,
 )
-from kits.room_chat import ChatAuthor, ChatMessage, RoomChatTopic
-from kits.voice_agent import VoiceAgentTopic, VoiceTranscriberTopic
+from python.room_chat import ChatMessage, RoomChatTopic
+from python.voice_agent import VoiceAgentTopic, VoiceTranscriberTopic
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from ag_ui.core import (
     Event,
@@ -50,29 +51,24 @@ from ag_ui.core import (
 LAYER = "default"
 
 
-def _who(scope: Any) -> str:
-    """The demo has no auth, so identity comes from the query string."""
-    return query_params(scope).get("as", ["anonymous"])[0]
+@dataclass(frozen=True)
+class DemoUser:
+    """What a real auth middleware would put on the scope."""
+
+    id: str
+    username: str
 
 
-# Each subclass answers one identity hook from the query string, standing in for the
-# auth a real project would have. Group names carry the class name, so outside code
-# broadcasts through these, not the kit classes.
-class DemoUserNotificationTopic(UserNotificationTopic):
-    def current_user_id(self) -> str | None:
-        return _who(self.scope)
+class DemoIdentity:
+    """``?as=<name>`` as the scope user, standing in for auth; the kits read it from there."""
 
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
 
-class DemoPresenceTopic(PresenceTopic):
-    def presence_member(self) -> PresenceMember:
-        who = _who(self.scope)
-        return PresenceMember(id=who, name=who.title())
-
-
-class DemoChatTopic(RoomChatTopic):
-    def chat_author(self) -> ChatAuthor:
-        who = _who(self.scope)
-        return ChatAuthor(id=who, name=who.title())
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if who := query_params(scope).get("as", [""])[0]:
+            scope = {**scope, "user": DemoUser(id=who, username=who.title())}
+        await self.app(scope, receive, send)
 
 
 @channel(
@@ -83,7 +79,7 @@ class DemoChatTopic(RoomChatTopic):
 class NotificationConsumer(AsyncJsonWebsocketConsumer[NotificationMessage]):
     channel_layer_alias = LAYER
     topics: ClassVar[list[type[Topic[Any]]]] = [
-        DemoUserNotificationTopic,
+        UserNotificationTopic,
         SubjectNotificationTopic,
         BroadcastNotificationTopic,
     ]
@@ -106,7 +102,7 @@ class RoomConsumer(
     """Two independent kits listed side by side: chat and the roster."""
 
     channel_layer_alias = LAYER
-    topics: ClassVar[list[type[Topic[Any]]]] = [DemoChatTopic, DemoPresenceTopic]
+    topics: ClassVar[list[type[Topic[Any]]]] = [RoomChatTopic, PresenceTopic]
 
     @ws_handler(summary="Ping", description="Connection health check.")
     async def handle_ping(self, _message: PingMessage) -> PongMessage:
@@ -162,8 +158,8 @@ if TYPE_CHECKING:
     TranscriberBase = FakeTranscriberTopic
     SynthesizerBase = FakeSynthesizerTopic
 else:
-    from kits.deepgram.transcriber import DeepgramTranscriberTopic
-    from kits.elevenlabs.synthesizer import ElevenLabsSynthesizerTopic
+    from python.deepgram.transcriber import DeepgramTranscriberTopic
+    from python.elevenlabs.synthesizer import ElevenLabsSynthesizerTopic
 
     TranscriberBase = (
         DeepgramTranscriberTopic

@@ -14,6 +14,7 @@ from sandbox.consumers import (
     PROVIDERS,
     AgentConsumer,
     AssistantConsumer,
+    DemoIdentity,
     NotificationConsumer,
     RoomConsumer,
     VoiceConsumer,
@@ -48,10 +49,10 @@ async def asyncapi_yaml(request: Request) -> Response:
     return await asyncapi_spec_yaml(request=request, app=app, config=asyncapi_config)
 
 
-@app.get("/api/providers", tags=["sandbox"])
-async def providers() -> dict[str, str]:
-    """Which provider kit serves speech to text and text to speech."""
-    return PROVIDERS
+@app.get("/api/sandbox", tags=["sandbox"])
+async def sandbox() -> dict[str, object]:
+    """Which server this is, and which provider kit serves speech in and out."""
+    return {"server": "python", "framework": "fastapi", "providers": PROVIDERS}
 
 
 ws = FastAPI()
@@ -60,6 +61,7 @@ ws.router.add_websocket_route("/rooms/{room}", RoomConsumer.as_asgi())
 ws.router.add_websocket_route("/agent", AgentConsumer.as_asgi())
 ws.router.add_websocket_route("/voice", VoiceConsumer.as_asgi())
 ws.router.add_websocket_route("/assistant", AssistantConsumer.as_asgi())
+ws.add_middleware(DemoIdentity)
 app.mount("/ws", ws)
 
 if UI_DIST.is_dir():

@@ -4,17 +4,20 @@ the topic. Needs REDIS_URL (in ``.env``), since an in-memory layer cannot cross 
     uv run python -m sandbox.send_notification "Build finished"
     uv run python -m sandbox.send_notification --user chris "Just for you"
 
-Publishes through the classes consumers.py mounts: group names are namespaced by class
-name, so a different class would address a group nobody joined and fail silently.
+Publishes through the kit classes consumers.py lists: group names are namespaced by
+class name, so a subclass would address a group nobody joined and fail silently.
 """
 
 import argparse
 import asyncio
 import os
 
-from kits.notification import BroadcastNotificationTopic, NotificationPayload
+from python.notification import (
+    BroadcastNotificationTopic,
+    NotificationPayload,
+    UserNotificationTopic,
+)
 
-from sandbox.consumers import DemoUserNotificationTopic
 from sandbox.env import load_env
 from sandbox.layers import setup_layers
 
@@ -43,7 +46,7 @@ async def main() -> None:
     payload = NotificationPayload(title=title, body="sent from a separate process")
 
     if args.user:
-        await DemoUserNotificationTopic.notify_user(args.user, payload)
+        await UserNotificationTopic.notify_user(args.user, payload)
         print(f"Sent {title!r} to user {args.user!r}")
     else:
         await BroadcastNotificationTopic.notify_all(payload)

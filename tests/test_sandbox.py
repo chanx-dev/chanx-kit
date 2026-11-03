@@ -28,19 +28,19 @@ def test_every_route_and_its_topics_are_published(spec: dict[str, Any]) -> None:
     channels = spec["channels"]
 
     assert {"notifications", "room", "agent"} <= set(channels)
-    assert {"room_demo_chat_topic", "room_demo_presence_topic"} <= set(channels)
+    assert {"room_room_chat_topic", "room_presence_topic"} <= set(channels)
 
     # topics share the address of the route hosting them
     room_address = channels["room"]["address"]
-    for name in ("room_demo_chat_topic", "room_demo_presence_topic"):
+    for name in ("room_room_chat_topic", "room_presence_topic"):
         assert channels[name]["address"] == room_address
         assert channels[name]["x-topic"]["pattern"]
 
 
 def test_each_kit_keeps_its_own_messages(spec: dict[str, Any]) -> None:
     """Scoping is the point: chat messages belong to chat, presence to presence."""
-    chat = set(spec["channels"]["room_demo_chat_topic"]["messages"])
-    presence = set(spec["channels"]["room_demo_presence_topic"]["messages"])
+    chat = set(spec["channels"]["room_room_chat_topic"]["messages"])
+    presence = set(spec["channels"]["room_presence_topic"]["messages"])
 
     assert {"chat_message", "chat_send_message"} <= chat
     assert {"presence_join_message", "presence_leave_message"} <= presence
@@ -50,8 +50,8 @@ def test_each_kit_keeps_its_own_messages(spec: dict[str, Any]) -> None:
 def test_messages_pushed_on_subscribe_are_declared(spec: dict[str, Any]) -> None:
     # Sent from on_subscribe, not returned by a handler; chanx only discovers
     # messages through handlers, so each kit exposes an explicit request message.
-    chat = set(spec["channels"]["room_demo_chat_topic"]["messages"])
-    presence = set(spec["channels"]["room_demo_presence_topic"]["messages"])
+    chat = set(spec["channels"]["room_room_chat_topic"]["messages"])
+    presence = set(spec["channels"]["room_presence_topic"]["messages"])
 
     assert "chat_backlog_message" in chat
     assert "presence_state_message" in presence
@@ -73,8 +73,8 @@ def test_kits_are_listed_rather_than_stacked() -> None:
         for topic in RoomConsumer.topics
     }
 
-    assert {"chat_send", "chat_backlog_request"} <= mounted["DemoChatTopic"]
-    assert "presence_request" in mounted["DemoPresenceTopic"]
+    assert {"chat_send", "chat_backlog_request"} <= mounted["RoomChatTopic"]
+    assert "presence_request" in mounted["PresenceTopic"]
     # the consumer keeps its own un-addressed handlers
     assert "ping" in RoomConsumer._MESSAGE_HANDLER_INFO_MAP
 
@@ -120,7 +120,7 @@ def test_every_kit_message_is_reachable_from_the_sandbox(spec: dict[str, Any]) -
         # Scan the messages module, not the package: unexported messages are exactly
         # the gap this test is for.
         try:
-            module = importlib.import_module(f"kits.{package}.messages")
+            module = importlib.import_module(f"python.{package}.messages")
         except ModuleNotFoundError:
             continue
 
@@ -141,11 +141,25 @@ def test_every_kit_message_is_reachable_from_the_sandbox(spec: dict[str, Any]) -
     )
 
 
-def test_the_ui_can_tell_which_providers_serve_voice() -> None:
+def test_the_ui_can_tell_which_server_and_providers_it_talks_to() -> None:
     from fastapi.testclient import TestClient
     from sandbox.main import app
 
-    providers = TestClient(app).get("/api/providers").json()
+    sandbox = TestClient(app).get("/api/sandbox").json()
+    providers = sandbox["providers"]
 
+    assert sandbox["server"] == "python"
     assert providers["stt"] in {"deepgram", "fake-voice"}
     assert providers["tts"] in {"elevenlabs", "fake-voice"}
+
+
+def test_query_identity_reaches_the_kits_as_the_scope_user() -> None:
+    from fastapi.testclient import TestClient
+    from sandbox.main import app
+
+    with TestClient(app).websocket_connect("/ws/rooms/lobby?as=ann") as ws:
+        ws.send_json({"action": "subscribe", "topic": "presence:lobby"})
+        frames = [ws.receive_json() for _ in range(3)]
+
+    state = next(f for f in frames if f["action"] == "presence_state")
+    assert state["payload"]["members"] == [{"id": "ann", "name": "Ann", "data": {}}]

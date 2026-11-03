@@ -12,6 +12,17 @@ export interface Providers {
   tts: string;
 }
 
+export type Server = 'python' | 'go' | 'js';
+
+/** What `/api/sandbox` says about the server behind the UI. */
+export interface Sandbox {
+  server: Server;
+  framework: string;
+  providers: Providers;
+}
+
+const EVERY_SERVER: Server[] = ['python', 'go', 'js'];
+
 export interface Demo {
   id: string;
   title: string;
@@ -21,7 +32,9 @@ export interface Demo {
   kits: (providers: Providers) => string[];
   ui: string[];
   consumer: string;
-  render: (who: string) => ReactNode;
+  /** Servers whose sandbox mounts these kits; Python's mounts them all. */
+  servers: Server[];
+  render: (who: string, sandbox: Sandbox) => ReactNode;
 }
 
 /** One page per demo, grouped as in the docs. */
@@ -34,7 +47,8 @@ export const DEMOS: [Demo, ...Demo[]] = [
     kits: () => ['notification'],
     ui: ['notification'],
     consumer: 'NotificationConsumer',
-    render: (who) => <NotificationPanel who={who} />,
+    servers: EVERY_SERVER,
+    render: (who, sandbox) => <NotificationPanel who={who} server={sandbox.server} />,
   },
   {
     id: 'room',
@@ -44,6 +58,7 @@ export const DEMOS: [Demo, ...Demo[]] = [
     kits: () => ['room-chat', 'presence'],
     ui: ['chat', 'presence'],
     consumer: 'RoomConsumer',
+    servers: EVERY_SERVER,
     render: (who) => <RoomPanel who={who} />,
   },
   {
@@ -54,6 +69,7 @@ export const DEMOS: [Demo, ...Demo[]] = [
     kits: () => ['ag-ui'],
     ui: ['ag-ui'],
     consumer: 'AgentConsumer',
+    servers: ['python'],
     render: () => <AgentPanel />,
   },
   {
@@ -64,6 +80,7 @@ export const DEMOS: [Demo, ...Demo[]] = [
     kits: ({ stt }) => ['audio-stream-in', stt],
     ui: ['transcriber'],
     consumer: 'VoiceConsumer',
+    servers: ['python'],
     render: () => <VoicePanel />,
   },
   {
@@ -74,6 +91,7 @@ export const DEMOS: [Demo, ...Demo[]] = [
     kits: ({ tts }) => ['audio-stream-out', tts],
     ui: ['player'],
     consumer: 'VoiceConsumer',
+    servers: ['python'],
     render: () => <SpeechPanel />,
   },
   {
@@ -84,6 +102,7 @@ export const DEMOS: [Demo, ...Demo[]] = [
     kits: ({ stt, tts }) => [...new Set(['voice-agent', stt, tts])],
     ui: ['voice-agent'],
     consumer: 'AssistantConsumer',
+    servers: ['python'],
     render: () => <AssistantPanel />,
   },
 ];

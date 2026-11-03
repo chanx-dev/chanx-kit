@@ -76,9 +76,30 @@ uv run python -m sandbox.worker <run-id>
 ```
 
 Both publish through the same topic classes `consumers.py` mounts, and that matters:
-group names are namespaced by class name, so `DemoUserNotificationTopic` and the
-`UserNotificationTopic` it subclasses address different groups. Publishing from the wrong
-one is silent, since a broadcast with no subscribers is not an error.
+group names are namespaced by class name, so a subclass of `UserNotificationTopic` would
+address a different group. Publishing from the wrong one is silent, since a broadcast
+with no subscribers is not an error. That is why identity comes from `DemoIdentity`, a
+middleware putting `?as=<name>` on the scope as the user, rather than from subclasses.
+
+## Go and JS servers
+
+The same UI runs against the Go and JS kits, on the framework you pick. Build the UI
+once, then start one server instead of the Python one:
+
+```bash
+go -C go/sandbox run . -framework gin          # nethttp, chi, gin, echo, fiber
+npm --prefix js run sandbox -- --framework hono # node, express, koa, fastify, hono
+```
+
+They serve the demos whose kits they have, notifications and the chat room, and the
+sidebar says which server and framework you are on. With the same `REDIS_URL`, a Python,
+Go and JS server share one room: the kits use the same group names and the layers the
+same prefix. Each has its own notify command:
+
+```bash
+go -C go/sandbox run . notify -user chris "Just for you"
+npm --prefix js run sandbox:notify -- --user chris "Just for you"
+```
 
 ## Files
 
@@ -90,6 +111,7 @@ one is silent, since a broadcast with no subscribers is not an error.
 | `__main__.py` | `python -m sandbox`, with the startup banner |
 | `send_notification.py`, `worker.py` | Publishing from outside the web process |
 | `ui/` | The React demo, with `src/generated/` written by the codegen and `src/chanx-kit/` installed from the UI registry by copit |
+| `../go/sandbox/`, `../js/sandbox/` | The Go and JS servers for the same UI, one per framework |
 
 ## After changing a kit
 

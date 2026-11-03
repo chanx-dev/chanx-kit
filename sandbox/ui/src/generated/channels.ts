@@ -58,8 +58,8 @@ export type AssistantAssistantVoiceTopicToClient = SpeechAudioChunkMessage | Spe
 
 export type NotificationsToServer = PingMessage;
 export type NotificationsToClient = PongMessage;
-export type NotificationDemoUserNotificationTopicToServer = NotificationAckMessage;
-export type NotificationDemoUserNotificationTopicToClient = NotificationAckedMessage | NotificationMessage;
+export type NotificationUserNotificationTopicToServer = NotificationAckMessage;
+export type NotificationUserNotificationTopicToClient = NotificationAckedMessage | NotificationMessage;
 export type NotificationSubjectNotificationTopicToServer = NotificationAckMessage;
 export type NotificationSubjectNotificationTopicToClient = NotificationAckedMessage | NotificationMessage;
 export type NotificationBroadcastNotificationTopicToServer = NotificationAckMessage;
@@ -67,10 +67,10 @@ export type NotificationBroadcastNotificationTopicToClient = NotificationAckedMe
 
 export type RoomToServer = PingMessage;
 export type RoomToClient = PongMessage;
-export type RoomDemoChatTopicToServer = ChatBacklogRequestMessage | ChatSendMessage;
-export type RoomDemoChatTopicToClient = ChatBacklogMessage | ChatMessage;
-export type RoomDemoPresenceTopicToServer = PresenceRequestMessage;
-export type RoomDemoPresenceTopicToClient = PresenceJoinMessage | PresenceLeaveMessage | PresenceStateMessage;
+export type RoomRoomChatTopicToServer = ChatBacklogRequestMessage | ChatSendMessage;
+export type RoomRoomChatTopicToClient = ChatBacklogMessage | ChatMessage;
+export type RoomPresenceTopicToServer = PresenceRequestMessage;
+export type RoomPresenceTopicToClient = PresenceJoinMessage | PresenceLeaveMessage | PresenceStateMessage;
 
 export type VoiceToServer = PingMessage;
 export type VoiceToClient = PongMessage;
@@ -130,9 +130,9 @@ export const notifications = defineChannel<NotificationsToServer, NotificationsT
   address: "/ws/notifications",
   heartbeat: true,
   topics: {
-    /** None */
-    demoUserNotificationTopic: defineTopic<NotificationDemoUserNotificationTopicToServer, NotificationDemoUserNotificationTopicToClient>()({
-      name: "demo_user_notification_topic",
+    /** Notifications addressed to one user: ``notification:user:<user_id>``. */
+    userNotificationTopic: defineTopic<NotificationUserNotificationTopicToServer, NotificationUserNotificationTopicToClient>()({
+      name: "user_notification_topic",
       pattern: "notification:user:{user_id}",
     }),
     /** Notifications for a subject users opt into: ``notification:subject:<name>``. */
@@ -154,14 +154,14 @@ export const room = defineChannel<RoomToServer, RoomToClient>()({
   address: "/ws/rooms/{room}",
   heartbeat: true,
   topics: {
-    /** None */
-    demoChatTopic: defineTopic<RoomDemoChatTopicToServer, RoomDemoChatTopicToClient>()({
-      name: "demo_chat_topic",
+    /** Chat for one room: ``chat:<room>``. On subscribe the client receives ``chat_backlog`` with recent messages, then ``chat_message`` as they arrive. Replace :attr:`message_store` with a database-backed :class:`~.store.MessageStore`, because the in-memory default is not durable. */
+    roomChatTopic: defineTopic<RoomRoomChatTopicToServer, RoomRoomChatTopicToClient>()({
+      name: "room_chat_topic",
       pattern: "chat:{room}",
     }),
-    /** None */
-    demoPresenceTopic: defineTopic<RoomDemoPresenceTopicToServer, RoomDemoPresenceTopicToClient>()({
-      name: "demo_presence_topic",
+    /** Tracks who is present in a scope: ``presence:<scope>``. On subscribe the client receives a ``presence_state`` message with the full roster, then ``presence_join`` / ``presence_leave`` as it changes. A member with several connections open produces one join and one leave, not one per tab. Override :meth:`presence_member` to describe the member. */
+    presenceTopic: defineTopic<RoomPresenceTopicToServer, RoomPresenceTopicToClient>()({
+      name: "presence_topic",
       pattern: "presence:{scope}",
     }),
   },

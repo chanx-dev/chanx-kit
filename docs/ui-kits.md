@@ -7,6 +7,10 @@ A UI kit binds to a **contract** (the messages on a topic), not to one server ki
 transcriber UI works with any server kit that speaks `transcriber@1`: Deepgram,
 ElevenLabs, OpenAI or the fake one. Each kit page lists what it works with.
 
+The server does not have to be Python. The [Go](go/index.md) and [Node](js/index.md)
+ports of notification, presence and room chat speak the same contracts, checked in CI,
+so the notification, presence and chat UI kits work against them unchanged.
+
 ## Install
 
 UI kits live in a second registry in the same repository. Add it once, next to the
@@ -18,7 +22,8 @@ uvx copit registry add chanx-kit-ui github:chanx-dev/chanx-kit@v0.4.0 \
 ```
 
 copit 0.9 sees React in `package.json` and selects the `react` variant; on older copit
-add `--variant react`. Then install kits, usually alongside their server kit:
+add `--variant react`. From copit 0.10 the `--index` can go: the root index lists every
+registry in the repository, and the name `chanx-kit-ui` finds it. Then install kits, usually alongside their server kit:
 
 ```bash
 uvx copit add @chanx-kit/notification @chanx-kit-ui/notification

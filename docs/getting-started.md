@@ -201,6 +201,11 @@ repository:
     await notifyUser(chanx, user.id, { title: 'Build finished' });
     ```
 
+Go kits need copit 0.10 or newer: it runs `go get` for their modules and rewrites the
+imports between kits (the Redis presence store imports presence) to your module path.
+An older copit copies the files but does neither. From 0.10, `--index` can also be left
+out: the registry name finds it.
+
 Hooks are options rather than subclasses there: a struct field in Go, a factory option in
 Node. [Go kits](go/index.md) and [Node kits](js/index.md) list them.
 

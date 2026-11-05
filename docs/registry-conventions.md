@@ -176,9 +176,37 @@ they work wherever `--to` puts them.
 The docs site also publishes the UI kits as a shadcn registry, generated from the same
 index by `scripts/shadcn.py`.
 
+## Go and JS registries
+
+Each language is a registry of its own folder: `python/`, `ui/`, `go/` and `js/`, each
+with a `registry.yaml` and its published `copit-registry.json`. The root
+`copit-registry.json` is the Python index plus a `registries` catalog naming the others,
+so `copit registry add chanx-kit-go github:chanx-dev/chanx-kit@<tag>` finds the Go one
+by name (copit 0.10), and existing setups without `--index` keep reading Python.
+
+- **Contracts are defined in Python.** A Go or JS kit `implements` the contract of the
+  Python kit it ports and names its own `contract_topic`; `scripts/contracts.py check`
+  generates its types and fails on any difference from Python's. Defining a contract
+  outside `python/` is a registry error.
+- **Same names on the wire.** Types, topics and messages keep the Python names, so a
+  Python, Go and Node server on one Redis share groups, and generated clients match.
+- **Directories.** JS kits keep the id (`room-chat`); Go kits drop the dashes
+  (`roomchat`), since the directory is the package name.
+- **Imports between Go kits.** Go has no relative imports, so a Go kit imports another
+  as `go.chanx.dev/kit/<kit>`, the module of `go/`. `install.module_path` in
+  `go/registry.yaml` tells copit to rewrite that prefix to the project's module plus the
+  install target.
+
+```yaml
+# go/presence/kit.yaml
+implements: [presence@1]
+contract_topic: PresenceTopic
+```
+
 ## Conformance
 
 chanx-kit doubles as copit's integration fixture: it exercises kit-to-kit dependencies,
 tiers, package dependencies and optional groups for real. CI installs every kit into a
 throwaway project with copit and imports the result, so a change that breaks installation
-fails here rather than in a user's project.
+fails here rather than in a user's project. `scripts/port_conformance.py` does the same
+for Go and JS, tests included: `go vet` and `go test`, `tsc` and `vitest`.

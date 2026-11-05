@@ -143,6 +143,10 @@ npm --prefix sandbox/ui run gen
 This is why a new kit must be mounted in `sandbox/consumers.py`: a kit nobody mounts is
 absent from that schema and has no contract check at all. A test enforces it.
 
+Porting a kit to Go or JS keeps that contract: the port reuses the Python names, and
+`scripts/contracts.py check` fails when its generated types differ. See
+[Go and JS registries](registry-conventions.md#go-and-js-registries).
+
 ## Dependencies
 
 ```yaml

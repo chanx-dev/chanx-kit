@@ -12,7 +12,7 @@ export function AgentPanel() {
   // A thread is the topic, so several conversations could share this connection.
   const { messages, running, error, status, run, cancel } = useAgentThread(
     agent,
-    agent.topics.demoAgUiTopic.with({ thread_id: threadId.current }),
+    agent.topics.agUiTopic.with({ thread_id: threadId.current }),
     { onEvent: (event) => setLastEvent(event.type) },
   );
 

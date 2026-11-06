@@ -60,7 +60,7 @@ def test_messages_pushed_on_subscribe_are_declared(spec: dict[str, Any]) -> None
 
 def test_agent_channel_speaks_ag_ui(spec: dict[str, Any]) -> None:
     """The whole protocol travels in two messages, keyed on payload.type."""
-    agent = set(spec["channels"]["agent_demo_ag_ui_topic"]["messages"])
+    agent = set(spec["channels"]["agent_ag_ui_topic"]["messages"])
 
     assert {"ag_ui_run_message", "ag_ui_event_message"} <= agent
 

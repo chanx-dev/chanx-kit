@@ -42,8 +42,8 @@ import type {
 
 export type AgentToServer = PingMessage;
 export type AgentToClient = PongMessage;
-export type AgentDemoAgUiTopicToServer = AgUiCancelMessage | AgUiRunMessage;
-export type AgentDemoAgUiTopicToClient = AgUiEventMessage;
+export type AgentAgUiTopicToServer = AgUiCancelMessage | AgUiRunMessage;
+export type AgentAgUiTopicToClient = AgUiEventMessage;
 export type AgentAgUiRunTopicToServer = never;
 export type AgentAgUiRunTopicToClient = AgUiEventMessage;
 
@@ -87,9 +87,9 @@ export const agent = defineChannel<AgentToServer, AgentToClient>()({
   address: "/ws/agent",
   heartbeat: true,
   topics: {
-    /** Scripts the events a provider would produce; the demo has no model credentials, so the protocol is identical but the content is local. */
-    demoAgUiTopic: defineTopic<AgentDemoAgUiTopicToServer, AgentDemoAgUiTopicToClient>()({
-      name: "demo_ag_ui_topic",
+    /** Scripted events, no model; named as the kit's, as the Go and JS sandboxes must. */
+    agUiTopic: defineTopic<AgentAgUiTopicToServer, AgentAgUiTopicToClient>()({
+      name: "ag_ui_topic",
       pattern: "agui:thread:{thread_id}",
     }),
     /** One run's events: ``agui:run:<run_id>``. Lets work happening off the connection (a worker, a graph node, a tool) emit by run id, and a client subscribes to the run it started. */

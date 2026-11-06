@@ -1,6 +1,9 @@
+import type { RunAgentInput } from '@ag-ui/core';
+import { EventType } from '@ag-ui/core';
 import type { ConnectRequest } from '@chanx-js/server';
 import { PingMessage, PongMessage, consumer } from '@chanx-js/server';
 
+import { AgUiRunTopic, agUiTopic } from '../kits/ag-ui';
 import {
   BroadcastNotificationTopic,
   SubjectNotificationTopic,
@@ -34,4 +37,28 @@ export const room = consumer('/ws/rooms/{room}', {
   description: 'Room chat with history and a live roster.',
   authenticate,
   topics: [RoomChatTopic, PresenceTopic],
+}).on(PingMessage, { output: PongMessage }, () => PongMessage.create());
+
+async function* cannedReply(input: RunAgentInput, { signal }: { signal: AbortSignal }) {
+  const last = input.messages.at(-1)?.content;
+  const reply =
+    `You said: ${JSON.stringify(typeof last === 'string' ? last : '')}. This sandbox has no model ` +
+    'credentials, so these AG-UI events are produced locally to show the protocol ' +
+    'travelling over a chanx websocket.';
+  const messageId = `m-${input.runId}`;
+  yield { type: EventType.TEXT_MESSAGE_START, messageId, role: 'assistant' as const };
+  for (const word of reply.split(' ')) {
+    await new Promise((resolve) => setTimeout(resolve, 40));
+    if (signal.aborted) return;
+    yield { type: EventType.TEXT_MESSAGE_CONTENT, messageId, delta: `${word} ` };
+  }
+  yield { type: EventType.TEXT_MESSAGE_END, messageId };
+}
+
+/** AG-UI with a scripted reply: the sandbox has no model. */
+export const agent = consumer('/ws/agent', {
+  name: 'agent',
+  description: 'AG-UI protocol over a websocket.',
+  authenticate,
+  topics: [agUiTopic({ runAgent: cannedReply }), AgUiRunTopic],
 }).on(PingMessage, { output: PongMessage }, () => PongMessage.create());

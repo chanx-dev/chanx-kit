@@ -27,7 +27,8 @@ from chanx.messages.outgoing import PongMessage
 from chanx.utils.scope import query_params
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from kits.ag_ui import AgUiEventMessage, AgUiRunTopic, AgUiTopic
+from kits import ag_ui
+from kits.ag_ui import AgUiEventMessage, AgUiRunTopic
 from kits.audio_stream_in import (
     TranscriptFinalMessage,
     TranscriptTopic,
@@ -109,9 +110,8 @@ class RoomConsumer(
         return PongMessage()
 
 
-class DemoAgUiTopic(AgUiTopic):
-    """Scripts the events a provider would produce; the demo has no model
-    credentials, so the protocol is identical but the content is local."""
+class AgUiTopic(ag_ui.AgUiTopic):
+    """Scripted events, no model; named as the kit's, as the Go and JS sandboxes must."""
 
     channel_layer_alias = LAYER
 
@@ -142,7 +142,7 @@ class AgentConsumer(AsyncJsonWebsocketConsumer[AgUiEventMessage]):
     own topic, so another process can emit into it. See sandbox/worker.py."""
 
     channel_layer_alias = LAYER
-    topics: ClassVar[list[type[Topic[Any]]]] = [DemoAgUiTopic, AgUiRunTopic]
+    topics: ClassVar[list[type[Topic[Any]]]] = [AgUiTopic, AgUiRunTopic]
 
     @ws_handler(summary="Ping", description="Connection health check.")
     async def handle_ping(self, _message: PingMessage) -> PongMessage:

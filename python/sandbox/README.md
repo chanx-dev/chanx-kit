@@ -91,7 +91,7 @@ go -C go/sandbox run . -framework gin          # nethttp, chi, gin, echo, fiber
 npm --prefix js run sandbox -- --framework hono # node, express, koa, fastify, hono
 ```
 
-They serve the demos whose kits they have, notifications and the chat room, and the
+They serve the demos whose kits they have, notifications, the chat room and AG-UI, and the
 sidebar says which server and framework you are on. With the same `REDIS_URL`, a Python,
 Go and JS server share one room: the kits use the same group names and the layers the
 same prefix. Each has its own notify command:

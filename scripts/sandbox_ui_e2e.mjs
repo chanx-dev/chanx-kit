@@ -34,7 +34,7 @@ const a = await tab();
 check(await shows(a.locator('.chanx-notifications[data-state="open"]')), 'the notification feed connects');
 check((await a.locator('.brand').innerText()).includes(`${server} · ${framework}`), 'the sidebar names the server');
 const nav = await a.locator('nav').innerText();
-check(server === 'python' ? nav.includes('AG-UI') : !nav.includes('AG-UI'), 'only the demos this server has are listed');
+check(nav.includes('AG-UI') && (server === 'python') === nav.includes('Voice agent'), 'only the demos this server has are listed');
 
 if (notify.length) {
   const [command, ...args] = notify;
@@ -56,6 +56,11 @@ check(await shows(entry), 'a message reaches the other tab');
 check((await entry.locator('.chanx-chat__author').innerText()) === 'Chris', 'with its author');
 await b.context().close();
 check(await shows(a.locator('.chanx-presence__member', { hasText: 'Bea' }), 'detached'), 'closing a tab leaves the roster');
+await a.goto(`${base}/#/agent`);
+await shows(a.locator('.status[data-state="open"]'));
+await a.locator('textarea').fill('hello agent');
+await a.getByRole('button', { name: /run/i }).first().click();
+check(await shows(a.getByText('You said')), 'the agent streams a reply over AG-UI');
 check(errors.length === 0, `no page errors${errors.length ? `: ${errors.join('; ')}` : ''}`);
 
 await browser.close();

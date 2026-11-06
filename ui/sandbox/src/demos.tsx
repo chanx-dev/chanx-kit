@@ -69,7 +69,7 @@ export const DEMOS: [Demo, ...Demo[]] = [
     kits: () => ['ag-ui'],
     ui: ['ag-ui'],
     consumer: 'AgentConsumer',
-    servers: ['python'],
+    servers: EVERY_SERVER,
     render: () => <AgentPanel />,
   },
   {

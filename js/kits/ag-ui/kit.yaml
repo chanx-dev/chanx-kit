@@ -1,0 +1,25 @@
+name: ag-ui
+title: AG-UI
+description: >-
+  Serve the AG-UI agent-user interaction protocol over a websocket, so any AG-UI
+  frontend works unchanged. Provider-agnostic: yield events from any agent. Optionally
+  broadcasts a run to every connection on its thread, replaying it to late joiners.
+version: 0.1.0
+tier: core
+role: feature
+area: agents
+tags: [agent, ag-ui, protocol, streaming]
+authors: ["Huy Nguyen <ndhgl99@gmail.com>"]
+
+implements: [ag-ui@2]
+contract_topic: AgUiTopic
+
+dependencies:
+  - "@chanx-js/server@^2.2.0"
+  - "@ag-ui/core@^1.0.4"
+  - "zod@^4.1.0"
+
+optional:
+  tests:
+    dependencies:
+      - "vitest@^3.2.4"

@@ -3,11 +3,13 @@
 import type { TopicLike } from '@chanx-js/server';
 import { consumer, createChanx } from '@chanx-js/server';
 
+import { agUiTopic } from '../kits/ag-ui';
 import { BroadcastNotificationTopic } from '../kits/notification';
 import { PresenceTopic } from '../kits/presence';
 import { RoomChatTopic } from '../kits/room-chat';
 
 const topics: Record<string, TopicLike> = {
+  'ag-ui': agUiTopic(),
   notification: BroadcastNotificationTopic,
   presence: PresenceTopic,
   'room-chat': RoomChatTopic,

@@ -41,6 +41,9 @@ export class ThreadBusyError extends Error {
   }
 }
 
+/** Why a run whose only watcher left stops: there is no one to tell it ended. */
+const LEFT = new Error('the run\'s connection left');
+
 const TERMINAL = new Set<string>([EventType.RUN_FINISHED, EventType.RUN_ERROR]);
 const newRunId = () => randomUUID().replaceAll('-', '');
 const runError = (message: string): BaseEvent =>
@@ -103,6 +106,7 @@ export function agUiTopic(options: AgUiTopicOptions = {}) {
         await emit(event);
       }
     } catch (error) {
+      if (controller.signal.reason === LEFT) return;
       // A cancelled run did not produce what was asked, so it ends as an error.
       await emit(
         runError(controller.signal.aborted ? 'Run cancelled.' : String((error as Error)?.message ?? error)),
@@ -130,7 +134,7 @@ export function agUiTopic(options: AgUiTopicOptions = {}) {
     // A run only this socket sees is pointless once it leaves; a broadcast one is the thread's.
     onUnsubscribe: (ctx) => {
       if (options.broadcast) return;
-      for (const id of ctx.state.own) runs.get(id)?.abort();
+      for (const id of ctx.state.own) runs.get(id)?.abort(LEFT);
     },
   })
     .on(

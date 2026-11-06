@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"iter"
 	"sync"
@@ -45,9 +46,12 @@ func (e *ThreadBusyError) Error() string {
 }
 
 type run struct {
-	cancel context.CancelFunc
+	cancel context.CancelCauseFunc
 	owner  string
 }
+
+// errLeft stops a run whose only watcher left: there is no one to tell it ended.
+var errLeft = errors.New("agui: the run's connection left")
 
 // runs are this process's runs in flight, by thread and run id.
 var runs = struct {
@@ -98,13 +102,13 @@ func (t AgUiTopic) stream(ctx context.Context, in RunAgentInput) iter.Seq2[Event
 
 // drive runs a claimed run to its end and releases the thread, however it ends.
 func (t AgUiTopic) drive(parent context.Context, in RunAgentInput, emit func(Event) error, owner string) {
-	ctx, cancel := context.WithCancel(parent)
+	ctx, cancel := context.WithCancelCause(parent)
 	key := [2]string{in.ThreadID, in.RunID}
 	runs.Lock()
 	runs.m[key] = run{cancel, owner}
 	runs.Unlock()
 	defer func() {
-		cancel()
+		cancel(nil)
 		runs.Lock()
 		delete(runs.m, key)
 		runs.Unlock()
@@ -126,6 +130,7 @@ func (t AgUiTopic) drive(parent context.Context, in RunAgentInput, emit func(Eve
 	}
 	// A cancelled run did not produce what was asked, so it ends as an error.
 	switch {
+	case errors.Is(context.Cause(ctx), errLeft):
 	case ctx.Err() != nil:
 		_ = emit(RunError("Run cancelled."))
 	case failure != nil:
@@ -193,7 +198,7 @@ func (t AgUiTopic) OnUnsubscribe(ctx *chanx.Context) error {
 	defer runs.Unlock()
 	for key, r := range runs.m {
 		if key[0] == ctx.Params["thread_id"] && r.owner == ctx.Conn.ChannelName {
-			r.cancel()
+			r.cancel(errLeft)
 		}
 	}
 	return nil
@@ -231,7 +236,7 @@ func (AgUiTopic) HandleAgUiCancel(ctx *chanx.Context, m AgUiCancelMessage) error
 	runs.Lock()
 	defer runs.Unlock()
 	if r, ok := runs.m[[2]string{ctx.Params["thread_id"], m.Payload.RunID}]; ok {
-		r.cancel()
+		r.cancel(nil)
 	}
 	return nil
 }
@@ -273,7 +278,7 @@ func (AgUiTopic) CancelRun(threadID, runID string) bool {
 	stopped := false
 	for key, r := range runs.m {
 		if key[0] == threadID && (runID == "" || key[1] == runID) {
-			r.cancel()
+			r.cancel(nil)
 			stopped = true
 		}
 	}

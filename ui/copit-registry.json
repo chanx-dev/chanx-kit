@@ -29,7 +29,7 @@
       "title": "AG-UI thread",
       "description": "Headless state for one AG-UI conversation: messages folded from streamed events, the run in flight, run and cancel. Replay-safe when several tabs share a thread.",
       "tier": "core",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "path": "ui/kits/ag-ui",
       "tags": [
         "agent",
@@ -308,7 +308,7 @@
       "title": "Voice agent",
       "description": "Talk to an agent: an open microphone, live captions, the reply spoken as it streams, and interrupting by speaking. Composes the transcriber, player and ag-ui UI kits over one session.",
       "tier": "core",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "path": "ui/kits/voice-agent",
       "tags": [
         "voice",

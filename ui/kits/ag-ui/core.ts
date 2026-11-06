@@ -19,7 +19,7 @@ import type {
   RunAgentInput,
 } from './contract';
 
-/** A topic whose messages fit ag-ui@1; extra actions are fine. */
+/** A topic whose messages fit ag-ui@2; extra actions are fine. */
 export type AgUiThreadTopic<Ref> =
   Ref extends TopicRef<infer ToServer, infer ToClient, any>
     ? [ContractToServer] extends [ToServer]

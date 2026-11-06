@@ -43,7 +43,7 @@ def test_a_composite_ui_kit_needs_every_contract_it_brings() -> None:
     )
 
     assert [p.split(",")[0] for p in problems] == [
-        "voice-agent needs ag-ui@1",
+        "voice-agent needs ag-ui@2",
         "voice-agent needs synthesizer@1",
         "voice-agent needs transcriber@1",
     ]

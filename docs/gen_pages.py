@@ -74,7 +74,7 @@ ROLES = {
 CAPABILITIES = {
     "transcriber@1": "Speech to text",
     "synthesizer@1": "Text to speech",
-    "ag-ui@1": "Agent",
+    "ag-ui@2": "Agent",
 }
 
 

@@ -161,7 +161,7 @@ implementation of its store protocol.
 
 ## Provider kits
 
-A provider plugs a vendor into a contract (`transcriber@1`, `synthesizer@1`, `ag-ui@1`).
+A provider plugs a vendor into a contract (`transcriber@1`, `synthesizer@1`, `ag-ui@2`).
 
 - One kit per vendor, with a part per capability (`stt`, `tts`). A new capability is a
   new part, not a new kit.

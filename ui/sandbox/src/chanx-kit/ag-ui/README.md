@@ -1,7 +1,7 @@
 # AG-UI thread
 
 Headless state for one AG-UI conversation over a thread topic, for any server
-speaking **ag-ui@1**, such as the `ag-ui` or `pydantic-ai-ag-ui` server kits. It
+speaking **ag-ui@2**, such as the `ag-ui` or `pydantic-ai-ag-ui` server kits. It
 folds streamed events into AG-UI messages, tracks the run in flight, and sends
 `ag_ui_run` / `ag_ui_cancel`. There is no component: chat UIs are app-specific, so
 render `messages` your way.

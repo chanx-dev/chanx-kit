@@ -4,7 +4,7 @@ description: >-
   Run a Pydantic AI agent over the AG-UI protocol on a chanx websocket: streamed
   text, tool calls and human-in-the-loop approvals, with the conversation kept
   server-side and replayed to a reconnecting client as MESSAGES_SNAPSHOT.
-version: 0.2.1
+version: 0.3.0
 tier: contrib
 role: provider
 tags: [agent, ag-ui, pydantic-ai, streaming, approvals]
@@ -14,7 +14,7 @@ requires:
   - ag-ui
   - conversation-store
 
-implements: [ag-ui@1]
+implements: [ag-ui@2]
 
 dependencies:
   # 2.10.2 emits a discriminated union in the form AsyncAPI accepts;

@@ -91,11 +91,11 @@ relatively, so the copies stay yours to edit:
 | `notification` | `notification@1` | |
 | `presence` | `presence@1` | |
 | `chat` | `chat@1` | `presence` |
-| `ag-ui` | `ag-ui@1` | |
+| `ag-ui` | `ag-ui@2` | |
 | `audio` | | |
 | `transcriber` | `transcriber@1` | `audio` |
 | `player` | `synthesizer@1` | `audio` |
-| `voice-agent` | `transcriber@1`, `synthesizer@1`, `ag-ui@1` | `transcriber`, `player`, `ag-ui` |
+| `voice-agent` | `transcriber@1`, `synthesizer@1`, `ag-ui@2` | `transcriber`, `player`, `ag-ui` |
 
 **One session across contracts.** `voice-agent` speaks no contract of its own: it
 binds the transcriber, player and ag-ui cores to three topics of one session and adds

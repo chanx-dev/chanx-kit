@@ -149,7 +149,7 @@ defines: notification@1
 contract_topic: NotificationTopicBase   # the topic class whose messages are the contract
 
 # python/kits/pydantic_ai_ag_ui/kit.yaml: a provider reusing another kit's messages
-implements: [ag-ui@1]
+implements: [ag-ui@2]
 
 # ui/notification/kit.yaml
 consumes: [notification@1]

@@ -9,7 +9,7 @@ variants = ["react"]
 [[sources]]
 path = "src/chanx-kit/notification"
 source = "../../ui/kits/notification"
-copied_at = "2026-09-27T15:39:48Z"
+copied_at = "2026-11-06T07:19:22Z"
 component = "chanx-kit-ui:notification"
 component_version = "0.1.0"
 variants = ["react"]
@@ -17,7 +17,7 @@ variants = ["react"]
 [[sources]]
 path = "src/chanx-kit/presence"
 source = "../../ui/kits/presence"
-copied_at = "2026-09-27T15:39:48Z"
+copied_at = "2026-11-06T07:19:22Z"
 component = "chanx-kit-ui:presence"
 component_version = "0.1.0"
 variants = ["react"]
@@ -25,7 +25,7 @@ variants = ["react"]
 [[sources]]
 path = "src/chanx-kit/chat"
 source = "../../ui/kits/chat"
-copied_at = "2026-09-27T15:39:48Z"
+copied_at = "2026-11-06T07:19:22Z"
 component = "chanx-kit-ui:chat"
 component_version = "0.1.0"
 variants = ["react"]
@@ -33,15 +33,15 @@ variants = ["react"]
 [[sources]]
 path = "src/chanx-kit/ag-ui"
 source = "../../ui/kits/ag-ui"
-copied_at = "2026-09-27T15:39:48Z"
+copied_at = "2026-11-06T07:19:22Z"
 component = "chanx-kit-ui:ag-ui"
-component_version = "0.1.0"
+component_version = "0.2.0"
 variants = ["react"]
 
 [[sources]]
 path = "src/chanx-kit/transcriber"
 source = "../../ui/kits/transcriber"
-copied_at = "2026-09-27T15:39:48Z"
+copied_at = "2026-11-06T07:19:22Z"
 component = "chanx-kit-ui:transcriber"
 component_version = "0.1.0"
 variants = ["react"]
@@ -49,7 +49,7 @@ variants = ["react"]
 [[sources]]
 path = "src/chanx-kit/audio"
 source = "../../ui/kits/audio"
-copied_at = "2026-09-27T15:39:48Z"
+copied_at = "2026-11-06T07:19:22Z"
 component = "chanx-kit-ui:audio"
 component_version = "0.1.0"
 variants = ["react"]
@@ -57,7 +57,7 @@ variants = ["react"]
 [[sources]]
 path = "src/chanx-kit/player"
 source = "../../ui/kits/player"
-copied_at = "2026-09-27T15:39:48Z"
+copied_at = "2026-11-06T07:19:22Z"
 component = "chanx-kit-ui:player"
 component_version = "0.1.0"
 variants = ["react"]
@@ -65,7 +65,7 @@ variants = ["react"]
 [[sources]]
 path = "src/chanx-kit/voice-agent"
 source = "../../ui/kits/voice-agent"
-copied_at = "2026-09-27T15:39:48Z"
+copied_at = "2026-11-06T07:19:22Z"
 component = "chanx-kit-ui:voice-agent"
-component_version = "0.1.0"
+component_version = "0.2.0"
 variants = ["react"]

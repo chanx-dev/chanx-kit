@@ -4,7 +4,7 @@ description: >-
   Talk to any AG-UI agent: speech is transcribed, each utterance starts a run, the reply
   is spoken sentence by sentence as it streams, and speaking over it interrupts, keeping
   only what was heard. Provider-agnostic on all three sides.
-version: 0.1.0
+version: 0.2.0
 tier: core
 role: feature
 area: voice
@@ -18,7 +18,7 @@ requires:
 
 dependencies:
   - "chanx>=2.10.2,<3"
-  - "ag-ui-protocol>=0.1.19"
+  - "ag-ui-protocol>=1.0.0"
 
 optional:
   tests:

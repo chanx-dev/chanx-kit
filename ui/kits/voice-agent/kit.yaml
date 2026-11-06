@@ -4,7 +4,7 @@ description: >-
   Talk to an agent: an open microphone, live captions, the reply spoken as it streams,
   and interrupting by speaking. Composes the transcriber, player and ag-ui UI kits over
   one session.
-version: 0.1.0
+version: 0.2.0
 tier: core
 role: feature
 area: voice

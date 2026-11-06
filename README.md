@@ -33,7 +33,7 @@ uvx copit add @chanx-kit/notification
 - **Django and FastAPI, same kit.** Kits import only framework-agnostic
   [chanx](https://github.com/chanx-dev/chanx), so the same component runs on Django
   Channels and on FastAPI / fast-channels.
-- **Go and Node too.** Notification, presence and room chat are ported to
+- **Go and Node too.** Notification, presence, room chat and AG-UI are ported to
   [chanx-go](https://github.com/chanx-dev/chanx-go) and
   [chanx-js](https://github.com/chanx-dev/chanx-js), with the same messages and topic
   names, checked in CI. The UI kits work against any of them, and the servers can share

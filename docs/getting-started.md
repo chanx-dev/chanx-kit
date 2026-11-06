@@ -163,7 +163,7 @@ Each kit's page lists its hooks and their defaults.
 
 ## Go and Node
 
-The kits that carry a contract (notification, presence, room chat) are ported to
+The kits that carry a contract (notification, presence, room chat, AG-UI) are ported to
 [chanx-go](https://go.chanx.dev/) and [chanx-js](https://js.chanx.dev/), with the same
 messages and topic names, so the UI kits work unchanged and a Python, Go and Node server
 on one Redis reach each other's clients. Each language is its own registry in this

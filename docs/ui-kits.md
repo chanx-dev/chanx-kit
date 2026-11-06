@@ -8,8 +8,8 @@ transcriber UI works with any server kit that speaks `transcriber@1`: Deepgram,
 ElevenLabs, OpenAI or the fake one. Each kit page lists what it works with.
 
 The server does not have to be Python. The [Go](go/index.md) and [Node](js/index.md)
-ports of notification, presence and room chat speak the same contracts, checked in CI,
-so the notification, presence and chat UI kits work against them unchanged.
+ports of notification, presence, room chat and AG-UI speak the same contracts, checked in CI,
+so their UI kits work against them unchanged.
 
 ## Install
 

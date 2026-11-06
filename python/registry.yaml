@@ -7,7 +7,7 @@ homepage: https://github.com/chanx-dev/chanx-kit
 
 ecosystem: python
 
-root: python
+root: python/kits
 default_tier: contrib
 
 variants: [django, fastapi]

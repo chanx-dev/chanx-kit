@@ -13,11 +13,11 @@ repos:
         args: [--unsafe]
       - id: check-toml
       - id: check-json
-        exclude: ^(sandbox/ui|ui)/tsconfig\.json$
+        exclude: ^ui/(sandbox/)?tsconfig\.json$
       - id: check-merge-conflict
       - id: check-case-conflict
       - id: check-added-large-files
-        exclude: ^(uv\.lock|sandbox/ui/package-lock\.json|ui/package-lock\.json)$
+        exclude: ^(uv\.lock|ui/sandbox/package-lock\.json|ui/package-lock\.json)$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.11.13 # keep in sync with the lint group in pyproject.toml, or CI and pre-commit disagree on formatting

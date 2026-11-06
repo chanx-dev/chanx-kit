@@ -66,7 +66,7 @@ jobs:
           uv run --no-default-groups \
                  --extra ${{ matrix.backend }} \
                  --group dev-${{ matrix.backend }} --group registry \
-                 pytest python tests -q
+                 pytest python/kits tests -q
         env:
           CHANX_KIT_BACKEND: ${{ matrix.backend == 'django' && 'channels' || 'fast_channels' }}
 
@@ -95,12 +95,12 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: sandbox/ui/package-lock.json
-      - run: npm ci --prefix sandbox/ui
+          cache-dependency-path: ui/sandbox/package-lock.json
+      - run: npm ci --prefix ui/sandbox
       - name: Generate the client from the sandbox AsyncAPI schema
-        run: npm run --prefix sandbox/ui gen
-      - run: git diff --exit-code sandbox/ui/src/generated
-      - run: npm run --prefix sandbox/ui typecheck
+        run: npm run --prefix ui/sandbox gen
+      - run: git diff --exit-code ui/sandbox/src/generated
+      - run: npm run --prefix ui/sandbox typecheck
 
   ui-kits:
     name: UI kits
@@ -285,6 +285,6 @@ jobs:
           python-version: "3.13"
       - name: Install
         run: uv sync
-      - run: uv run ruff check src python scripts tests sandbox docs templates
-      - run: uv run ruff format --check src python scripts tests sandbox docs templates
+      - run: uv run ruff check src python scripts tests docs templates
+      - run: uv run ruff format --check src python scripts tests docs templates
       - run: uv run pyright

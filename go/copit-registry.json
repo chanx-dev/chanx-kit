@@ -9,7 +9,7 @@
   "variants": [],
   "install": {
     "target": "internal/wskits",
-    "module_path": "go.chanx.dev/kit",
+    "module_path": "go.chanx.dev/kit/kits",
     "exclude": [
       "kit.yaml"
     ],
@@ -27,7 +27,7 @@
       "description": "Fan out notifications to a user's live connections from anywhere in your app: an HTTP handler, a background worker, or another service.",
       "tier": "core",
       "version": "0.1.0",
-      "path": "go/notification",
+      "path": "go/kits/notification",
       "tags": [
         "notification",
         "fanout",
@@ -59,7 +59,7 @@
       "description": "Track who is present in a room, document or tenant, and tell everyone when that changes. Pluggable store; ships with an in-process default.",
       "tier": "core",
       "version": "0.1.0",
-      "path": "go/presence",
+      "path": "go/kits/presence",
       "tags": [
         "presence",
         "roster",
@@ -92,7 +92,7 @@
       "description": "Shared presence roster backed by Redis, so presence stays correct across several processes, and across Python, Go and Node servers on one Redis.",
       "tier": "contrib",
       "version": "0.1.0",
-      "path": "go/redispresencestore",
+      "path": "go/kits/redispresencestore",
       "tags": [
         "presence",
         "redis",
@@ -131,7 +131,7 @@
       "description": "A chat room: history replayed on connect, plus a live roster from the presence kit. Pluggable store, with an in-process default for demos and tests.",
       "tier": "core",
       "version": "0.1.0",
-      "path": "go/roomchat",
+      "path": "go/kits/roomchat",
       "tags": [
         "chat",
         "rooms",

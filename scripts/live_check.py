@@ -17,7 +17,7 @@ from typing import Any
 from dotenv import load_dotenv
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT))
+sys.path.insert(0, str(REPO_ROOT / "python"))
 
 SENTENCE = "Hello from chanx kit. The weather is lovely today."
 # Share of the sentence's words the transcript must contain; "chanx" is rarely heard.
@@ -56,15 +56,13 @@ def words(text: str) -> set[str]:
 
 async def check(provider: str, out: Path) -> bool:
     _, synth_module, synth_name, stt_module, stt_name = PROVIDERS[provider]
-    audio_start: Any = importlib.import_module("python.audio_stream_in").AudioStart
-    speech_format: Any = importlib.import_module("python.audio_stream_out").SpeechFormat
+    audio_start: Any = importlib.import_module("kits.audio_stream_in").AudioStart
+    speech_format: Any = importlib.import_module("kits.audio_stream_out").SpeechFormat
 
     synthesizer: Any = getattr(
-        importlib.import_module(f"python.{synth_module}"), synth_name
+        importlib.import_module(f"kits.{synth_module}"), synth_name
     )
-    transcriber: Any = getattr(
-        importlib.import_module(f"python.{stt_module}"), stt_name
-    )
+    transcriber: Any = getattr(importlib.import_module(f"kits.{stt_module}"), stt_name)
 
     started = time.perf_counter()
     first_audio = None

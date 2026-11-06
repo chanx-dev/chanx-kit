@@ -3,5 +3,5 @@
 from django.urls import include, path
 
 urlpatterns = [
-    path("api/chat/", include("python.django_message_store.urls")),
+    path("api/chat/", include("kits.django_message_store.urls")),
 ]

@@ -16,6 +16,7 @@ pytestmark = pytest.mark.skipif(
 @pytest.fixture(scope="module")
 def spec() -> dict[str, Any]:
     from fastapi.testclient import TestClient
+
     from sandbox.main import app
 
     response = TestClient(app).get("/asyncapi.json")
@@ -120,7 +121,7 @@ def test_every_kit_message_is_reachable_from_the_sandbox(spec: dict[str, Any]) -
         # Scan the messages module, not the package: unexported messages are exactly
         # the gap this test is for.
         try:
-            module = importlib.import_module(f"python.{package}.messages")
+            module = importlib.import_module(f"kits.{package}.messages")
         except ModuleNotFoundError:
             continue
 
@@ -143,6 +144,7 @@ def test_every_kit_message_is_reachable_from_the_sandbox(spec: dict[str, Any]) -
 
 def test_the_ui_can_tell_which_server_and_providers_it_talks_to() -> None:
     from fastapi.testclient import TestClient
+
     from sandbox.main import app
 
     sandbox = TestClient(app).get("/api/sandbox").json()
@@ -155,6 +157,7 @@ def test_the_ui_can_tell_which_server_and_providers_it_talks_to() -> None:
 
 def test_query_identity_reaches_the_kits_as_the_scope_user() -> None:
     from fastapi.testclient import TestClient
+
     from sandbox.main import app
 
     with TestClient(app).websocket_connect("/ws/rooms/lobby?as=ann") as ws:

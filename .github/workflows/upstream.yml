@@ -40,7 +40,7 @@ jobs:
           uv run --no-default-groups \
                  --extra ${{ matrix.backend }} \
                  --group dev-${{ matrix.backend }} --group registry \
-                 pytest python tests -q
+                 pytest python/kits tests -q
         env:
           CHANX_KIT_BACKEND: ${{ matrix.backend == 'django' && 'channels' || 'fast_channels' }}
 
@@ -51,10 +51,10 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: sandbox/ui/package-lock.json
+          cache-dependency-path: ui/sandbox/package-lock.json
       - name: Check the wire contract still matches
         if: matrix.backend == 'fastapi'
         run: |
-          npm ci --prefix sandbox/ui
-          npm run --prefix sandbox/ui gen
-          git diff --exit-code sandbox/ui/src/generated
+          npm ci --prefix ui/sandbox
+          npm run --prefix ui/sandbox gen
+          git diff --exit-code ui/sandbox/src/generated

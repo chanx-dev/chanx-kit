@@ -5,9 +5,9 @@ import (
 
 	chanx "go.chanx.dev/v2"
 
-	"go.chanx.dev/kit/notification"
-	"go.chanx.dev/kit/presence"
-	"go.chanx.dev/kit/roomchat"
+	"go.chanx.dev/kit/kits/notification"
+	"go.chanx.dev/kit/kits/presence"
+	"go.chanx.dev/kit/kits/roomchat"
 )
 
 // demoUser is what a real Authenticate would return. The kits read identity from

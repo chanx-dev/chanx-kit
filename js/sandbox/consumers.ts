@@ -5,9 +5,9 @@ import {
   BroadcastNotificationTopic,
   SubjectNotificationTopic,
   UserNotificationTopic,
-} from '../notification';
-import { PresenceTopic } from '../presence';
-import { RoomChatTopic } from '../room-chat';
+} from '../kits/notification';
+import { PresenceTopic } from '../kits/presence';
+import { RoomChatTopic } from '../kits/room-chat';
 
 /** What a real `authenticate` would return; the kits read `id` and `username`. */
 export interface DemoUser {

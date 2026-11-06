@@ -8,7 +8,7 @@ import (
 	"go.chanx.dev/v2/asyncapi"
 	"go.chanx.dev/v2/chanxtest"
 
-	"go.chanx.dev/kit/presence"
+	"go.chanx.dev/kit/kits/presence"
 )
 
 func TestTheUIsChannelsAndTopicsArePublished(t *testing.T) {

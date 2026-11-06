@@ -13,6 +13,6 @@
     "isolatedModules": true,
     "noEmit": true
   },
-  "include": ["*/**/*.ts", "*/**/*.tsx"],
+  "include": ["kits/**/*.ts", "kits/**/*.tsx", "tests/**/*.ts"],
   "exclude": ["node_modules"]
 }

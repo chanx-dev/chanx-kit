@@ -9,7 +9,7 @@ const { values } = parseArgs({
   options: {
     framework: { type: 'string', default: 'node' },
     port: { type: 'string', default: '8000' },
-    ui: { type: 'string', default: new URL('../../sandbox/ui/dist', import.meta.url).pathname },
+    ui: { type: 'string', default: new URL('../../ui/sandbox/dist', import.meta.url).pathname },
   },
 });
 

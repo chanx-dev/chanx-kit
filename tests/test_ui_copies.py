@@ -14,7 +14,7 @@ INDEX: dict[str, Any] = json.loads(
 PROJECTS = sorted(
     path.parent
     for path in [
-        REPO_ROOT / "sandbox" / "ui" / "copit.toml",
+        REPO_ROOT / "ui" / "sandbox" / "copit.toml",
         *REPO_ROOT.glob("templates/*/copit.toml"),
     ]
     if "chanx-kit-ui" in tomllib.loads(path.read_text()).get("registries", {})
@@ -31,7 +31,7 @@ def installed(project: Path) -> list[tuple[str, dict[str, Any]]]:
 
 
 def test_the_sandbox_installs_every_ui_kit() -> None:
-    names = {name for name, _ in installed(REPO_ROOT / "sandbox" / "ui")}
+    names = {name for name, _ in installed(REPO_ROOT / "ui" / "sandbox")}
     assert names == set(INDEX["components"])
 
 

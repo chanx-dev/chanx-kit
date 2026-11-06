@@ -18,7 +18,7 @@ import yaml
 from chanx.messages.base import BaseMessage
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT))
+sys.path.insert(0, str(REPO_ROOT / "python"))
 REGISTRY = json.loads((REPO_ROOT / "copit-registry.json").read_text())
 COMPONENTS: dict[str, Any] = REGISTRY["components"]
 UI_COMPONENTS: dict[str, Any] = json.loads(
@@ -253,10 +253,10 @@ def rewrite_links(markdown: str) -> str:
 def kit_messages(package: str) -> dict[str, tuple[str, dict[str, Any]]]:
     """Message classes a kit defines, keyed by action."""
     try:
-        module = importlib.import_module(f"python.{package}")
+        module = importlib.import_module(f"kits.{package}")
     except ModuleNotFoundError as error:
         # A bridge kit whose library the docs build does not install.
-        if (error.name or "").startswith("python"):
+        if (error.name or "").startswith("kits"):
             raise
         return {}
     found: dict[str, tuple[str, dict[str, Any]]] = {}
@@ -667,12 +667,12 @@ nav_lines.append("* [Tags](tags.md)")
 contributing = (REPO_ROOT / "CONTRIBUTING.md").read_text()
 for old, new in {
     "(docs/": "(",
-    "(python/README.md)": f"({REPO_URL}/blob/main/python/README.md)",
+    "(python/kits/README.md)": f"({REPO_URL}/blob/main/python/kits/README.md)",
 }.items():
     contributing = contributing.replace(old, new)
 # A kit's README is its docs page there.
 contributing = re.sub(
-    r"\(python/(\w+)/README\.md",
+    r"\(python/kits/(\w+)/README\.md",
     lambda m: f"(kits/{m[1].replace('_', '-')}.md",
     contributing,
 )

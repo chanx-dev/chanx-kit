@@ -18,16 +18,16 @@ should follow:
 Read a neighbouring kit before you start. Generated code that ignores the topic
 conventions or the message style will be sent back.
 
-Everything else follows from how kits are delivered: everything in `python/` is copied into
+Everything else follows from how kits are delivered: everything in `python/kits/` is copied into
 user projects, and nothing here is installed. A change reaches people only when they run
 `copit update`, and it must not silently break them. Runtime helpers live in chanx; the
-test harness is itself a kit (`python/chanx_testing/`). A helper only one kit needs belongs
+test harness is itself a kit (`python/kits/chanx_testing/`). A helper only one kit needs belongs
 in that kit.
 
 New kits start at `tier: contrib`. One that proves useful and stable is promoted to
 `core` by changing that one line: no move, no id change, and nothing breaks for anyone
 who already installed it. The flat layout is deliberate; see
-[python/README.md](python/README.md).
+[python/kits/README.md](python/kits/README.md).
 
 ## Setup
 
@@ -45,7 +45,7 @@ For the sandbox's cross-process demos and live provider checks, copy `.env.examp
 
 ## Checklist for a new kit
 
-1. `python/<package_name>/` with a directory name that is a valid Python identifier
+1. `python/kits/<package_name>/` with a directory name that is a valid Python identifier
    (`room_chat`, while its id is `room-chat`)
 2. `kit.yaml`, the registry metadata; see below
 3. `messages.py`, giving every message an action `Literal` and a Pydantic payload
@@ -56,9 +56,9 @@ For the sandbox's cross-process demos and live provider checks, copy `.env.examp
    add its `dependencies` to the `dev` group in `pyproject.toml` so both backend legs
    can import it. A kit that genuinely cannot run on both declares `only_variants`
    instead; see below
-7. Mount it in `sandbox/consumers.py`, so its messages reach the AsyncAPI schema that
+7. Mount it in `python/sandbox/consumers.py`, so its messages reach the AsyncAPI schema that
    freezes the wire contract. If it has a UI kit, give it a page in
-   `sandbox/ui/src/demos.tsx`
+   `ui/sandbox/src/demos.tsx`
 8. A feature users install gets a line in `docs/recipes.yaml` and the README's feature
    table: the one command that installs its server and UI halves
 9. `uv run python scripts/registry.py build` to regenerate the index
@@ -69,7 +69,7 @@ index for a kit missing either.
 ## kit.yaml
 
 Each kit describes itself in one file. `scripts/registry.py` reads every
-`python/*/kit.yaml` plus `python/registry.yaml`, and generates the committed
+`python/kits/*/kit.yaml` plus `python/registry.yaml`, and generates the committed
 `python/copit-registry.json`, copied to the root `copit-registry.json` the CLI fetches by
 default.
 
@@ -166,8 +166,8 @@ A provider plugs a vendor into a contract (`transcriber@1`, `synthesizer@1`, `ag
 - One kit per vendor, with a part per capability (`stt`, `tts`). A new capability is a
   new part, not a new kit.
 - Subclass the contract's topic and run its shared suite against it (`TranscriberContract`
-  and friends); see [writing a provider](python/audio_stream_in/README.md#writing-a-provider).
-- Tests never call the vendor: fake its server, as `python/deepgram/tests/fake_listen.py`
+  and friends); see [writing a provider](python/kits/audio_stream_in/README.md#writing-a-provider).
+- Tests never call the vendor: fake its server, as `python/kits/deepgram/tests/fake_listen.py`
   does.
 - Read the API key when it is used, never at import: an `api_key` class attribute with a
   `key()` falling back to the environment variable.
@@ -182,8 +182,8 @@ things, one framework at a time and across Python 3.11 to 3.14.
 ```bash
 uv run pre-commit run --all-files
 
-CHANX_KIT_BACKEND=fast_channels uv run pytest python tests
-CHANX_KIT_BACKEND=channels      uv run pytest python tests
+CHANX_KIT_BACKEND=fast_channels uv run pytest python/kits tests
+CHANX_KIT_BACKEND=channels      uv run pytest python/kits tests
 
 uv run pyright
 uv run python scripts/registry.py check
@@ -200,7 +200,7 @@ installs or the framework boundary:
 ```bash
 # one framework installed, which is what actually proves a kit does not need the other
 CHANX_KIT_BACKEND=channels uv run --no-default-groups \
-    --extra django --group dev-django --group registry pytest python tests
+    --extra django --group dev-django --group registry pytest python/kits tests
 
 uv run python scripts/conformance.py    # install every kit with copit and import it
 ```
@@ -219,7 +219,7 @@ install rather than through a release here.
 
 ## Go and JS kits
 
-`go/` and `js/` hold ports of Python kits, each its own registry. A port **implements**
+`go/kits/` and `js/kits/` hold ports of Python kits, each language its own registry, with its sandbox beside it in `go/sandbox/` and `js/sandbox/`. A port **implements**
 a contract a Python kit defines, never defines one, and keeps the Python names: types,
 topics and messages, so groups and generated clients match. Name its `contract_topic`
 in `kit.yaml` and add it to `go/internal/contract` or `js/scripts/contract.ts`; then
@@ -237,7 +237,7 @@ kit directories drop the id's dashes (`roomchat`), since they are package names.
 
 ## UI kits
 
-UI kits live in `ui/`, a second copit registry (`ui/registry.yaml`, published as
+UI kits live in `ui/kits/`, a second copit registry (`ui/registry.yaml`, published as
 `ui/copit-registry.json`). Each binds to a contract, not a server kit: `contract.ts` is
 generated, `core.ts` is framework-free and tested with vitest, `react/` ships only with
 the `react` variant, and styles are one CSS file driven by `--chanx-*` variables.
@@ -255,7 +255,7 @@ uv run --extra fastapi --group dev-fastapi python scripts/contracts.py check
 ```
 
 The sandbox installs every UI kit through copit, and tests fail when one is missing or
-a copy drifts from `ui/`. Add a new one with `cd sandbox/ui && copit add
+a copy drifts from `ui/`. Add a new one with `cd ui/sandbox && copit add
 @chanx-kit-ui/<kit>`, and refresh the copies after a change with `copit update-all`.
 
 ## Commit messages
@@ -275,7 +275,7 @@ chore: bump the chanx floor
 ## Changing an existing kit
 
 - Changing a message shape changes the generated TypeScript types, so CI fails until
-  you regenerate them (`npm --prefix sandbox/ui run gen`). Bump the kit's `version` and
+  you regenerate them (`npm --prefix ui/sandbox run gen`). Bump the kit's `version` and
   explain the migration in its README.
 - If the kit `defines` a contract, regenerate the UI kits' copies of it
   (`uv run --extra fastapi --group dev-fastapi python scripts/contracts.py build`, after

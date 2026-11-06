@@ -30,7 +30,7 @@
       "description": "Headless state for one AG-UI conversation: messages folded from streamed events, the run in flight, run and cancel. Replay-safe when several tabs share a thread.",
       "tier": "core",
       "version": "0.1.0",
-      "path": "ui/ag-ui",
+      "path": "ui/kits/ag-ui",
       "tags": [
         "agent",
         "ag-ui",
@@ -68,7 +68,7 @@
       "description": "The pure audio helpers the voice UI kits share: resampling, PCM16 conversion, fixed-duration chunking, levels and base64. No browser APIs, so they run and test anywhere.",
       "tier": "core",
       "version": "0.1.0",
-      "path": "ui/audio",
+      "path": "ui/kits/audio",
       "tags": [
         "audio",
         "pcm",
@@ -94,7 +94,7 @@
       "description": "A chat log with history on join and a composer, for any server speaking the chat contract. Shows the room's roster through the presence UI kit.",
       "tier": "core",
       "version": "0.1.0",
-      "path": "ui/chat",
+      "path": "ui/kits/chat",
       "tags": [
         "chat",
         "rooms"
@@ -136,7 +136,7 @@
       "description": "A live notification feed with per-topic acknowledgement, for any server speaking the notification contract.",
       "tier": "core",
       "version": "0.1.0",
-      "path": "ui/notification",
+      "path": "ui/kits/notification",
       "tags": [
         "notification",
         "feed"
@@ -176,7 +176,7 @@
       "description": "Play what a server speaks, for any server speaking the synthesizer contract. Headless playback with a jitter buffer, instant interruption and playback marks back to the server, plus a React player.",
       "tier": "core",
       "version": "0.1.0",
-      "path": "ui/player",
+      "path": "ui/kits/player",
       "tags": [
         "audio",
         "text-to-speech",
@@ -220,7 +220,7 @@
       "description": "Who is here, kept current from joins and leaves, for any server speaking the presence contract.",
       "tier": "core",
       "version": "0.1.0",
-      "path": "ui/presence",
+      "path": "ui/kits/presence",
       "tags": [
         "presence",
         "roster"
@@ -260,7 +260,7 @@
       "description": "Record from the microphone and show live captions, for any server speaking the transcriber contract. Headless capture (resampled PCM16 in numbered chunks), a transcript store, and React recorder and caption components.",
       "tier": "core",
       "version": "0.1.0",
-      "path": "ui/transcriber",
+      "path": "ui/kits/transcriber",
       "tags": [
         "audio",
         "speech-to-text",
@@ -309,7 +309,7 @@
       "description": "Talk to an agent: an open microphone, live captions, the reply spoken as it streams, and interrupting by speaking. Composes the transcriber, player and ag-ui UI kits over one session.",
       "tier": "core",
       "version": "0.1.0",
-      "path": "ui/voice-agent",
+      "path": "ui/kits/voice-agent",
       "tags": [
         "voice",
         "agent",

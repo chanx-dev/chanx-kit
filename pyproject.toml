@@ -107,21 +107,24 @@ version_provider = "pep621"
 [tool.coverage]
 
 [tool.coverage.run]
-source = ["python"]
+source = ["python/kits"]
 
 [tool.hatch.build.targets.sdist]
 include = ["src", "LICENSE", "README.md"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/chanx_kit"]
+# The editable install puts python/ on sys.path: `import kits`, `python -m sandbox`.
+dev-mode-dirs = ["src", "python"]
 
 [tool.pytest]
 
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
 asyncio_mode = "auto"
-testpaths = ["tests", "python"]
+testpaths = ["tests", "python/kits"]
+pythonpath = ["python"]
 
 [tool.uv]
 default-groups = ["dev", "dev-django", "dev-fastapi", "docs", "lint", "registry", "test"]
-package = false
+package = true

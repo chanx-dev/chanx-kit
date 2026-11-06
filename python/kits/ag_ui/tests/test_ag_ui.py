@@ -1,0 +1,1015 @@
+import asyncio
+from collections.abc import AsyncIterator, Iterator
+from typing import Any, ClassVar
+
+import pytest
+from ag_ui.core import (
+    CustomEvent,
+    Event,
+    EventType,
+    RunAgentInput,
+    RunStartedEvent,
+    TextMessageContentEvent,
+    TextMessageEndEvent,
+    TextMessageStartEvent,
+)
+from chanx.core.topic import Topic
+
+from ...chanx_testing import (
+    KitConsumer,
+    assert_silent,
+    build_app,
+    communicator,
+    receive_json,
+    receive_until,
+    setup_memory_layer,
+)
+from ..messages import AgUiCancel, AgUiCancelMessage, AgUiRunMessage
+from ..store import InMemoryActiveRunStore, InMemoryRunEventStore
+from ..topics import AgUiRunTopic, AgUiTopic
+
+PATH = "/ws/agent"
+THREAD = "agui:thread:thread-1"
+
+
+def run_input(**overrides: Any) -> RunAgentInput:
+    defaults: dict[str, Any] = {
+        "thread_id": "thread-1",
+        "run_id": "run-1",
+        "state": {},
+        "messages": [],
+        "tools": [],
+        "context": [],
+        "forwarded_props": {},
+    }
+    defaults.update(overrides)
+    return RunAgentInput(**defaults)
+
+
+class ScriptedAgUiTopic(AgUiTopic):
+    """Yields a fixed text message, the way a provider adapter would."""
+
+    async def run_agent(self, run_input: RunAgentInput) -> AsyncIterator[Event]:
+        yield TextMessageStartEvent(
+            type=EventType.TEXT_MESSAGE_START, message_id="msg-1"
+        )
+        yield TextMessageContentEvent(
+            type=EventType.TEXT_MESSAGE_CONTENT, message_id="msg-1", delta="Hello"
+        )
+        yield TextMessageEndEvent(type=EventType.TEXT_MESSAGE_END, message_id="msg-1")
+
+
+class AgUiConsumer(KitConsumer):
+    channel_layer_alias = "default"
+    topics: ClassVar[list[type[Topic[Any]]]] = [ScriptedAgUiTopic, AgUiRunTopic]
+
+
+@pytest.fixture(autouse=True)
+def _layer() -> None:
+    setup_memory_layer("default")
+    # Topics share one claim registry, so a test leaving a run in flight would
+    # otherwise refuse the next test's run on the same thread.
+    active_runs = AgUiTopic.active_run_store
+    if isinstance(active_runs, InMemoryActiveRunStore):
+        active_runs.reset()
+
+
+@pytest.fixture
+def app() -> Any:
+    return build_app({PATH: AgUiConsumer})
+
+
+async def test_a_run_is_bracketed_by_started_and_finished(app: Any) -> None:
+    async with communicator(app, PATH, AgUiConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.send_message(AgUiRunMessage(payload=run_input()), topic=THREAD)
+
+        messages = await receive_json(comm, 5)
+
+    types = [m["payload"]["type"] for m in messages]
+
+    assert types == [
+        "RUN_STARTED",
+        "TEXT_MESSAGE_START",
+        "TEXT_MESSAGE_CONTENT",
+        "TEXT_MESSAGE_END",
+        "RUN_FINISHED",
+    ]
+    assert {m["action"] for m in messages} == {"ag_ui_event"}
+
+
+async def test_events_are_camel_case_on_the_wire(app: Any) -> None:
+    """AG-UI clients read camelCase; snake_case would be silently incompatible."""
+    async with communicator(app, PATH, AgUiConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.send_message(AgUiRunMessage(payload=run_input()), topic=THREAD)
+
+        started = await receive_until(comm, "ag_ui_event")
+        content = (await receive_json(comm, 2))[1]
+
+    assert "threadId" in started["payload"]
+    assert "thread_id" not in started["payload"]
+    assert content["payload"]["messageId"] == "msg-1"
+    assert "message_id" not in content["payload"]
+
+
+async def test_opaque_state_keys_are_never_rewritten(app: Any) -> None:
+    """`state` is the user's own JSON. A blanket camelizer would corrupt it."""
+
+    class EchoStateTopic(ScriptedAgUiTopic):
+        async def run_agent(self, run_input: RunAgentInput) -> AsyncIterator[Event]:
+            from ag_ui.core import StateSnapshotEvent
+
+            yield StateSnapshotEvent(
+                type=EventType.STATE_SNAPSHOT, snapshot=run_input.state
+            )
+
+    class EchoConsumer(KitConsumer):
+        channel_layer_alias = "default"
+        topics: ClassVar[list[type[Topic[Any]]]] = [EchoStateTopic, AgUiRunTopic]
+
+    echo_app = build_app({PATH: EchoConsumer})
+    state = {"user_profile": {"first_name": "Ana"}, "API_KEY_ref": 1}
+
+    async with communicator(echo_app, PATH, EchoConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(state=state)), topic=THREAD
+        )
+
+        await receive_json(comm, 1)  # RUN_STARTED
+        snapshot = (await receive_json(comm, 1))[0]
+
+    assert snapshot["payload"]["snapshot"] == state
+
+
+async def test_camel_case_input_from_the_wire_is_accepted(app: Any) -> None:
+    """An AG-UI client sends camelCase; it has to parse without translation."""
+    async with communicator(app, PATH, AgUiConsumer) as comm:
+        await comm.subscribe("agui:thread:thread-9")
+        await comm.send_json_to(
+            {
+                "version": 1,
+                "topic": "agui:thread:thread-9",
+                "action": "ag_ui_run",
+                "payload": {
+                    "threadId": "thread-9",
+                    "runId": "run-9",
+                    "state": {},
+                    "messages": [],
+                    "tools": [],
+                    "context": [],
+                    "forwardedProps": {},
+                },
+            }
+        )
+
+        started = (await receive_json(comm, 1))[0]
+
+    assert started["payload"]["type"] == "RUN_STARTED"
+    assert started["payload"]["threadId"] == "thread-9"
+    assert started["payload"]["runId"] == "run-9"
+
+
+async def test_a_failing_provider_becomes_run_error(app: Any) -> None:
+    class FailingTopic(AgUiTopic):
+        async def run_agent(self, run_input: RunAgentInput) -> AsyncIterator[Event]:
+            raise RuntimeError("provider exploded")
+            yield  # pragma: no cover
+
+    class FailingConsumer(KitConsumer):
+        channel_layer_alias = "default"
+        topics: ClassVar[list[type[Topic[Any]]]] = [FailingTopic, AgUiRunTopic]
+
+    failing_app = build_app({PATH: FailingConsumer})
+
+    async with communicator(failing_app, PATH, FailingConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.send_message(AgUiRunMessage(payload=run_input()), topic=THREAD)
+
+        await receive_json(comm, 1)  # RUN_STARTED
+        error = (await receive_json(comm, 1))[0]
+
+    assert error["payload"]["type"] == "RUN_ERROR"
+    assert "provider exploded" in error["payload"]["message"]
+
+
+async def test_a_kit_without_run_agent_says_what_to_override(app: Any) -> None:
+    class BareTopic(AgUiTopic):
+        pass
+
+    class BareConsumer(KitConsumer):
+        channel_layer_alias = "default"
+        topics: ClassVar[list[type[Topic[Any]]]] = [BareTopic, AgUiRunTopic]
+
+    bare_app = build_app({PATH: BareConsumer})
+
+    async with communicator(bare_app, PATH, BareConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.send_message(AgUiRunMessage(payload=run_input()), topic=THREAD)
+
+        await receive_json(comm, 1)  # RUN_STARTED
+        error = (await receive_json(comm, 1))[0]
+
+    assert "must override run_agent()" in error["payload"]["message"]
+
+
+async def test_a_generated_run_id_reaches_run_agent(app: Any) -> None:
+    """A worker keyed off ``run_input.run_id`` would emit to an empty address if the
+    generated id were only put on RUN_STARTED."""
+    seen: list[str] = []
+
+    class RecordingTopic(ScriptedAgUiTopic):
+        def new_run_id(self) -> str:
+            return "generated-1"
+
+        async def run_agent(self, run_input: RunAgentInput) -> AsyncIterator[Event]:
+            seen.append(run_input.run_id)
+            async for event in super().run_agent(run_input):
+                yield event
+
+    class RecordingConsumer(KitConsumer):
+        channel_layer_alias = "default"
+        topics: ClassVar[list[type[Topic[Any]]]] = [RecordingTopic, AgUiRunTopic]
+
+    async with communicator(
+        build_app({PATH: RecordingConsumer}), PATH, RecordingConsumer
+    ) as comm:
+        await comm.subscribe(THREAD)
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(run_id="")), topic=THREAD
+        )
+        started = (await receive_json(comm, 5))[0]
+
+    assert seen == ["generated-1"]
+    assert started["payload"]["runId"] == "generated-1"
+
+
+def test_a_run_gets_its_own_group() -> None:
+    assert AgUiRunTopic.group_name("agui:run:run-1") != AgUiRunTopic.group_name(
+        "agui:run:run-2"
+    )
+
+
+async def test_own_run_events_stay_in_order(app: Any) -> None:
+    """Own events are sent directly, never through the run group, so a content delta
+    cannot overtake its ``TEXT_MESSAGE_START``."""
+    async with communicator(app, PATH, AgUiConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.send_message(AgUiRunMessage(payload=run_input()), topic=THREAD)
+
+        types = [m["payload"]["type"] for m in await receive_json(comm, 5)]
+
+    assert types == [
+        "RUN_STARTED",
+        "TEXT_MESSAGE_START",
+        "TEXT_MESSAGE_CONTENT",
+        "TEXT_MESSAGE_END",
+        "RUN_FINISHED",
+    ]
+
+
+async def test_another_process_can_emit_into_a_thread(app: Any) -> None:
+    """The thread subscription the client already has is enough: no run id up front."""
+    async with communicator(app, PATH, AgUiConsumer) as comm:
+        await comm.subscribe(THREAD)
+
+        await ScriptedAgUiTopic.emit_to_thread(
+            "thread-1",
+            TextMessageContentEvent(
+                type=EventType.TEXT_MESSAGE_CONTENT,
+                message_id="msg-3",
+                delta="from a worker",
+            ),
+        )
+        event = (await receive_json(comm, 1))[0]
+
+    assert event["payload"]["delta"] == "from a worker"
+    assert event["payload"]["messageId"] == "msg-3"
+
+
+async def test_a_thread_emit_does_not_reach_another_thread(app: Any) -> None:
+    async with communicator(app, PATH, AgUiConsumer) as comm:
+        await comm.subscribe(THREAD)
+
+        await ScriptedAgUiTopic.emit_to_thread(
+            "thread-2",
+            TextMessageContentEvent(
+                type=EventType.TEXT_MESSAGE_CONTENT, message_id="msg-4", delta="nope"
+            ),
+        )
+
+        await assert_silent(comm)
+
+
+RUN_EVENT_STORE = InMemoryRunEventStore()
+
+
+class BroadcastAgUiTopic(AgUiTopic):
+    """Broadcasts its run, so a late joiner is replayed."""
+
+    broadcast_run_events = True
+    run_event_store = RUN_EVENT_STORE
+    gate: ClassVar[asyncio.Event | None] = None
+
+    async def run_agent(self, run_input: RunAgentInput) -> AsyncIterator[Event]:
+        yield TextMessageStartEvent(
+            type=EventType.TEXT_MESSAGE_START, message_id="msg-1"
+        )
+        yield TextMessageContentEvent(
+            type=EventType.TEXT_MESSAGE_CONTENT, message_id="msg-1", delta="Hel"
+        )
+        if self.gate is not None:
+            await self.gate.wait()
+        yield TextMessageContentEvent(
+            type=EventType.TEXT_MESSAGE_CONTENT, message_id="msg-1", delta="lo"
+        )
+        yield TextMessageEndEvent(type=EventType.TEXT_MESSAGE_END, message_id="msg-1")
+
+
+class BroadcastConsumer(KitConsumer):
+    channel_layer_alias = "default"
+    topics: ClassVar[list[type[Topic[Any]]]] = [BroadcastAgUiTopic, AgUiRunTopic]
+
+
+@pytest.fixture
+def broadcast_app() -> Iterator[Any]:
+    RUN_EVENT_STORE.reset()
+    BroadcastAgUiTopic.gate = None
+    yield build_app({PATH: BroadcastConsumer})
+    BroadcastAgUiTopic.gate = None
+
+
+@pytest.fixture
+def gate() -> Iterator[asyncio.Event]:
+    event = asyncio.Event()
+    BroadcastAgUiTopic.gate = event
+    yield event
+    event.set()
+
+
+def types_of(messages: list[dict[str, Any]]) -> list[str]:
+    return [m["payload"]["type"] for m in messages]
+
+
+async def test_every_connection_on_a_thread_sees_the_same_run(
+    broadcast_app: Any,
+) -> None:
+    """The point of broadcasting: a second tab streams the run it did not start."""
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as first:
+        await first.subscribe(THREAD)
+        async with communicator(broadcast_app, PATH, BroadcastConsumer) as second:
+            await second.subscribe(THREAD)
+
+            await first.send_message(AgUiRunMessage(payload=run_input()), topic=THREAD)
+
+            expected = [
+                "RUN_STARTED",
+                "TEXT_MESSAGE_START",
+                "TEXT_MESSAGE_CONTENT",
+                "TEXT_MESSAGE_CONTENT",
+                "TEXT_MESSAGE_END",
+                "RUN_FINISHED",
+            ]
+            assert types_of(await receive_json(first, 6)) == expected
+            assert types_of(await receive_json(second, 6)) == expected
+
+
+async def test_run_events_carry_a_sequence_the_client_can_order_by(
+    broadcast_app: Any,
+) -> None:
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.send_message(AgUiRunMessage(payload=run_input()), topic=THREAD)
+
+        messages = await receive_json(comm, 6)
+
+    assert [m["seq"] for m in messages] == [1, 2, 3, 4, 5, 6]
+
+
+async def test_a_connection_joining_mid_run_is_replayed_from_the_start(
+    broadcast_app: Any, gate: asyncio.Event
+) -> None:
+    """AG-UI cannot join a stream in progress: a delta before its start is malformed."""
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as first:
+        await first.subscribe(THREAD)
+        await first.send_message(AgUiRunMessage(payload=run_input()), topic=THREAD)
+
+        opening = await receive_json(first, 3)
+        assert types_of(opening) == [
+            "RUN_STARTED",
+            "TEXT_MESSAGE_START",
+            "TEXT_MESSAGE_CONTENT",
+        ]
+
+        async with communicator(broadcast_app, PATH, BroadcastConsumer) as second:
+            await second.subscribe(THREAD)
+
+            replayed = await receive_json(second, 3)
+            assert types_of(replayed) == [
+                "RUN_STARTED",
+                "TEXT_MESSAGE_START",
+                "TEXT_MESSAGE_CONTENT",
+            ]
+            assert [m["seq"] for m in replayed] == [1, 2, 3]
+
+            gate.set()
+
+            rest = await receive_json(second, 3)
+            assert types_of(rest) == [
+                "TEXT_MESSAGE_CONTENT",
+                "TEXT_MESSAGE_END",
+                "RUN_FINISHED",
+            ]
+            # One sequence across the replayed and the live half, so a client can
+            # drop what it already applied and detect a gap.
+            assert [m["seq"] for m in rest] == [4, 5, 6]
+
+
+async def test_a_run_outlives_the_connection_that_started_it(
+    broadcast_app: Any, gate: asyncio.Event
+) -> None:
+    """What a mid-run refresh depends on: the run outlives its socket."""
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as first:
+        await first.subscribe(THREAD)
+        await first.send_message(AgUiRunMessage(payload=run_input()), topic=THREAD)
+        await receive_json(first, 3)
+
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as second:
+        await second.subscribe(THREAD)
+        assert types_of(await receive_json(second, 3)) == [
+            "RUN_STARTED",
+            "TEXT_MESSAGE_START",
+            "TEXT_MESSAGE_CONTENT",
+        ]
+
+        gate.set()
+
+        assert types_of(await receive_json(second, 3)) == [
+            "TEXT_MESSAGE_CONTENT",
+            "TEXT_MESSAGE_END",
+            "RUN_FINISHED",
+        ]
+
+
+async def test_a_finished_run_is_not_replayed(broadcast_app: Any) -> None:
+    """A finished run is the client's own history, not a stream to replay."""
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as first:
+        await first.subscribe(THREAD)
+        await first.send_message(AgUiRunMessage(payload=run_input()), topic=THREAD)
+        await receive_json(first, 6)
+
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as second:
+        await second.subscribe(THREAD)
+        await assert_silent(second)
+
+
+async def test_events_are_not_broadcast_by_default(app: Any) -> None:
+    """The default stays one connection per run: no group hop, no seq."""
+    async with communicator(app, PATH, AgUiConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.send_message(AgUiRunMessage(payload=run_input()), topic=THREAD)
+
+        messages = await receive_json(comm, 5)
+
+    assert all("seq" not in m for m in messages)
+
+
+async def test_a_second_connection_sees_nothing_when_not_broadcasting(app: Any) -> None:
+    async with communicator(app, PATH, AgUiConsumer) as first:
+        await first.subscribe(THREAD)
+        async with communicator(app, PATH, AgUiConsumer) as second:
+            await second.subscribe(THREAD)
+
+            await first.send_message(AgUiRunMessage(payload=run_input()), topic=THREAD)
+            await receive_json(first, 5)
+
+            await assert_silent(second)
+
+
+async def test_another_process_can_emit_into_a_run(app: Any) -> None:
+    """What ``sandbox/worker.py`` demonstrates: no consumer, no socket, just a run id."""
+    async with communicator(app, PATH, AgUiConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.subscribe("agui:run:run-1", ref="2")
+        await comm.send_message(AgUiRunMessage(payload=run_input()), topic=THREAD)
+        await receive_json(comm, 5)
+
+        await AgUiRunTopic.emit_to_run(
+            "run-1",
+            TextMessageContentEvent(
+                type=EventType.TEXT_MESSAGE_CONTENT,
+                message_id="msg-2",
+                delta="from a worker",
+            ),
+        )
+        event = (await receive_json(comm, 1))[0]
+
+    assert event["payload"]["delta"] == "from a worker"
+    assert event["payload"]["messageId"] == "msg-2"
+
+
+async def test_a_run_emitted_from_a_worker_is_replayed_to_a_late_joiner(
+    broadcast_app: Any,
+) -> None:
+    await BroadcastAgUiTopic.emit_to_thread(
+        "thread-1",
+        RunStartedEvent(type=EventType.RUN_STARTED, thread_id="thread-1", run_id="w"),
+    )
+    await BroadcastAgUiTopic.emit_to_thread(
+        "thread-1",
+        TextMessageStartEvent(type=EventType.TEXT_MESSAGE_START, message_id="m"),
+    )
+
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as late:
+        await late.subscribe(THREAD)
+        replayed = await receive_json(late, 2)
+
+    assert types_of(replayed) == ["RUN_STARTED", "TEXT_MESSAGE_START"]
+    assert [m["seq"] for m in replayed] == [1, 2]
+
+
+async def test_an_event_outside_a_run_is_not_replayed(broadcast_app: Any) -> None:
+    await BroadcastAgUiTopic.emit_to_thread(
+        "thread-1", CustomEvent(type=EventType.CUSTOM, name="ping", value=1)
+    )
+
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as late:
+        await late.subscribe(THREAD)
+        await assert_silent(late)
+
+
+async def test_initial_state_lands_before_the_replayed_run(
+    broadcast_app: Any, gate: asyncio.Event
+) -> None:
+    """The ordering the hook exists for: state first, so replayed events apply on
+    top of it rather than racing it."""
+
+    class StatefulTopic(BroadcastAgUiTopic):
+        async def transcript(self) -> Event | None:
+            return CustomEvent(type=EventType.CUSTOM, name="state", value={"ready": 1})
+
+    class StatefulConsumer(KitConsumer):
+        channel_layer_alias = "default"
+        topics: ClassVar[list[type[Topic[Any]]]] = [StatefulTopic, AgUiRunTopic]
+
+    app = build_app({PATH: StatefulConsumer})
+
+    async with communicator(app, PATH, StatefulConsumer) as first:
+        await first.subscribe(THREAD)
+        await receive_json(first, 1)  # its own initial state
+        await first.send_message(AgUiRunMessage(payload=run_input()), topic=THREAD)
+        await receive_json(first, 3)
+
+        async with communicator(app, PATH, StatefulConsumer) as late:
+            await late.subscribe(THREAD)
+            joined = await receive_json(late, 4)
+
+    assert types_of(joined)[0] == "CUSTOM"
+    assert joined[0]["payload"]["value"] == {"ready": 1}
+    # Then the run so far, from its start.
+    assert types_of(joined)[1:] == [
+        "RUN_STARTED",
+        "TEXT_MESSAGE_START",
+        "TEXT_MESSAGE_CONTENT",
+    ]
+
+
+async def test_a_provider_without_a_transcript_sends_nothing_extra(app: Any) -> None:
+    async with communicator(app, PATH, AgUiConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await assert_silent(comm)
+
+
+async def test_a_second_run_on_a_busy_thread_is_refused(
+    broadcast_app: Any, gate: asyncio.Event
+) -> None:
+    """One run at a time per thread. Two would share the thread's buffer and its
+    sequence, so the second resets the sequence mid-conversation."""
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(run_id="run-A")), topic=THREAD
+        )
+        assert types_of(await receive_json(comm, 3)) == [
+            "RUN_STARTED",
+            "TEXT_MESSAGE_START",
+            "TEXT_MESSAGE_CONTENT",
+        ]
+
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(run_id="run-B")), topic=THREAD
+        )
+        refusal = (await receive_json(comm, 1))[0]
+
+        assert refusal["payload"]["type"] == "RUN_ERROR"
+        assert "run-A" in refusal["payload"]["message"]
+        # Outside the run's sequence: it is not part of the run in flight.
+        assert "seq" not in refusal
+
+        gate.set()
+
+        # The refused run never displaced the one in flight, which finishes normally.
+        assert types_of(await receive_json(comm, 3)) == [
+            "TEXT_MESSAGE_CONTENT",
+            "TEXT_MESSAGE_END",
+            "RUN_FINISHED",
+        ]
+
+
+async def test_a_refusal_reaches_only_the_connection_that_asked(
+    broadcast_app: Any, gate: asyncio.Event
+) -> None:
+    """Broadcasting it would tell every other tab that the run they are watching
+    had failed."""
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as watcher:
+        await watcher.subscribe(THREAD)
+        async with communicator(broadcast_app, PATH, BroadcastConsumer) as second:
+            await second.subscribe(THREAD)
+
+            await watcher.send_message(
+                AgUiRunMessage(payload=run_input(run_id="run-A")), topic=THREAD
+            )
+            await receive_json(watcher, 3)
+            await receive_json(second, 3)
+
+            await second.send_message(
+                AgUiRunMessage(payload=run_input(run_id="run-B")), topic=THREAD
+            )
+            refusal = (await receive_json(second, 1))[0]
+            assert refusal["payload"]["type"] == "RUN_ERROR"
+
+            # The tab that did not ask hears nothing about it.
+            await assert_silent(watcher)
+
+            gate.set()
+
+
+async def test_a_thread_is_free_again_once_its_run_ends(broadcast_app: Any) -> None:
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as comm:
+        await comm.subscribe(THREAD)
+
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(run_id="run-A")), topic=THREAD
+        )
+        assert types_of(await receive_json(comm, 6))[-1] == "RUN_FINISHED"
+
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(run_id="run-B")), topic=THREAD
+        )
+        assert types_of(await receive_json(comm, 6)) == [
+            "RUN_STARTED",
+            "TEXT_MESSAGE_START",
+            "TEXT_MESSAGE_CONTENT",
+            "TEXT_MESSAGE_CONTENT",
+            "TEXT_MESSAGE_END",
+            "RUN_FINISHED",
+        ]
+
+
+async def test_a_failing_run_still_frees_the_thread(app: Any) -> None:
+    """A provider that raises must not strand the thread, or the conversation is
+    dead until the process restarts."""
+    attempts: list[str] = []
+
+    class FlakyTopic(AgUiTopic):
+        async def run_agent(self, run_input: RunAgentInput) -> AsyncIterator[Event]:
+            attempts.append(run_input.run_id)
+            if len(attempts) == 1:
+                raise RuntimeError("provider exploded")
+            yield TextMessageContentEvent(
+                type=EventType.TEXT_MESSAGE_CONTENT, message_id="m", delta="second try"
+            )
+
+    class FlakyConsumer(KitConsumer):
+        channel_layer_alias = "default"
+        topics: ClassVar[list[type[Topic[Any]]]] = [FlakyTopic, AgUiRunTopic]
+
+    flaky_app = build_app({PATH: FlakyConsumer})
+
+    async with communicator(flaky_app, PATH, FlakyConsumer) as comm:
+        await comm.subscribe(THREAD)
+
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(run_id="run-A")), topic=THREAD
+        )
+        assert types_of(await receive_json(comm, 2)) == ["RUN_STARTED", "RUN_ERROR"]
+
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(run_id="run-B")), topic=THREAD
+        )
+        retried = await receive_json(comm, 3)
+
+    assert types_of(retried) == [
+        "RUN_STARTED",
+        "TEXT_MESSAGE_CONTENT",
+        "RUN_FINISHED",
+    ]
+    assert attempts == ["run-A", "run-B"]
+
+
+async def test_a_cancelled_run_stops_producing(
+    broadcast_app: Any, gate: asyncio.Event
+) -> None:
+    """The point of cancelling: the provider stops being asked for more."""
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(run_id="run-A")), topic=THREAD
+        )
+        assert types_of(await receive_json(comm, 3)) == [
+            "RUN_STARTED",
+            "TEXT_MESSAGE_START",
+            "TEXT_MESSAGE_CONTENT",
+        ]
+
+        await comm.send_message(
+            AgUiCancelMessage(payload=AgUiCancel(run_id="run-A")), topic=THREAD
+        )
+        ended = (await receive_json(comm, 1))[0]
+
+        assert ended["payload"]["type"] == "RUN_ERROR"
+        assert ended["payload"]["message"] == "Run cancelled."
+        # Part of the run's sequence, so a client applies it in order.
+        assert ended["seq"] == 4
+
+        # Releasing the provider produces nothing: it was stopped, not paused.
+        gate.set()
+        await assert_silent(comm)
+
+
+async def test_a_thread_is_free_again_after_a_cancel(
+    broadcast_app: Any, gate: asyncio.Event
+) -> None:
+    """A cancel that did not release the claim would kill the conversation."""
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(run_id="run-A")), topic=THREAD
+        )
+        await receive_json(comm, 3)
+        await comm.send_message(
+            AgUiCancelMessage(payload=AgUiCancel(run_id="run-A")), topic=THREAD
+        )
+        assert types_of(await receive_json(comm, 1)) == ["RUN_ERROR"]
+
+        gate.set()
+        BroadcastAgUiTopic.gate = None
+
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(run_id="run-B")), topic=THREAD
+        )
+        assert types_of(await receive_json(comm, 6))[-1] == "RUN_FINISHED"
+
+
+async def test_a_cancel_reaches_a_run_another_tab_started(
+    broadcast_app: Any, gate: asyncio.Event
+) -> None:
+    """The run belongs to the thread, not to the socket that asked for it."""
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as first:
+        await first.subscribe(THREAD)
+        async with communicator(broadcast_app, PATH, BroadcastConsumer) as second:
+            await second.subscribe(THREAD)
+
+            await first.send_message(
+                AgUiRunMessage(payload=run_input(run_id="run-A")), topic=THREAD
+            )
+            await receive_json(first, 3)
+            await receive_json(second, 3)
+
+            await second.send_message(
+                AgUiCancelMessage(payload=AgUiCancel(run_id="run-A")), topic=THREAD
+            )
+
+            # Both tabs learn the run ended, not just the one that cancelled it.
+            assert types_of(await receive_json(first, 1)) == ["RUN_ERROR"]
+            assert types_of(await receive_json(second, 1)) == ["RUN_ERROR"]
+
+            gate.set()
+
+
+async def test_a_cancel_naming_a_finished_run_is_ignored(broadcast_app: Any) -> None:
+    """A cancel racing its own run's end must not disturb the thread."""
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(run_id="run-A")), topic=THREAD
+        )
+        assert types_of(await receive_json(comm, 6))[-1] == "RUN_FINISHED"
+
+        await comm.send_message(
+            AgUiCancelMessage(payload=AgUiCancel(run_id="run-A")), topic=THREAD
+        )
+        await assert_silent(comm)
+
+
+async def test_a_cancel_naming_another_run_leaves_this_one_alone(
+    broadcast_app: Any, gate: asyncio.Event
+) -> None:
+    """Why the run is named: a stale cancel cannot stop the run that replaced it."""
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(run_id="run-B")), topic=THREAD
+        )
+        await receive_json(comm, 3)
+
+        await comm.send_message(
+            AgUiCancelMessage(payload=AgUiCancel(run_id="run-A")), topic=THREAD
+        )
+        await assert_silent(comm)
+
+        gate.set()
+        assert types_of(await receive_json(comm, 3))[-1] == "RUN_FINISHED"
+
+
+async def test_a_cancel_is_accepted_as_camel_case(
+    broadcast_app: Any, gate: asyncio.Event
+) -> None:
+    """An AG-UI client sends camelCase; the control message has to match."""
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(run_id="run-A")), topic=THREAD
+        )
+        await receive_json(comm, 3)
+
+        await comm.send_json_to(
+            {
+                "version": 1,
+                "topic": THREAD,
+                "action": "ag_ui_cancel",
+                "payload": {"runId": "run-A"},
+            }
+        )
+        assert types_of(await receive_json(comm, 1)) == ["RUN_ERROR"]
+        gate.set()
+
+
+async def test_a_run_nobody_can_see_stops_when_its_connection_leaves() -> None:
+    """Not broadcast, so the run writes to one socket. Once that socket is gone the
+    rest of the run can never be seen, and producing it only costs."""
+    steps: list[str] = []
+    released = asyncio.Event()
+
+    class BurnTopic(AgUiTopic):
+        async def run_agent(self, run_input: RunAgentInput) -> AsyncIterator[Event]:
+            steps.append("before")
+            yield TextMessageStartEvent(
+                type=EventType.TEXT_MESSAGE_START, message_id="m"
+            )
+            await released.wait()
+            steps.append("after")
+            yield TextMessageContentEvent(
+                type=EventType.TEXT_MESSAGE_CONTENT, message_id="m", delta="wasted"
+            )
+
+    class BurnConsumer(KitConsumer):
+        channel_layer_alias = "default"
+        topics: ClassVar[list[type[Topic[Any]]]] = [BurnTopic, AgUiRunTopic]
+
+    burn_app = build_app({PATH: BurnConsumer})
+
+    async with communicator(burn_app, PATH, BurnConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.send_message(AgUiRunMessage(payload=run_input()), topic=THREAD)
+        await receive_json(comm, 2)
+        assert steps == ["before"]
+
+    released.set()
+    await asyncio.sleep(0.1)
+
+    assert steps == ["before"], "the run kept going with nobody able to see it"
+
+
+async def test_a_broadcast_run_still_outlives_its_connection(
+    broadcast_app: Any, gate: asyncio.Event
+) -> None:
+    """The counterpart: a broadcast run belongs to the thread, so leaving must not
+    cancel it — this is what a mid-run refresh depends on."""
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as first:
+        await first.subscribe(THREAD)
+        await first.send_message(AgUiRunMessage(payload=run_input()), topic=THREAD)
+        await receive_json(first, 3)
+
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as second:
+        await second.subscribe(THREAD)
+        await receive_json(second, 3)
+        gate.set()
+        assert types_of(await receive_json(second, 3))[-1] == "RUN_FINISHED"
+
+
+async def test_two_threads_run_at_the_same_time(broadcast_app: Any) -> None:
+    """The claim is per thread, not global: separate conversations are unaffected."""
+    other = "agui:thread:thread-2"
+
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await comm.subscribe(other, ref="2")
+
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(run_id="run-A")), topic=THREAD
+        )
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(thread_id="thread-2", run_id="run-B")),
+            topic=other,
+        )
+
+        messages = await receive_json(comm, 12)
+
+    by_thread: dict[str, list[str]] = {}
+    for message in messages:
+        by_thread.setdefault(message["topic"], []).append(message["payload"]["type"])
+
+    assert by_thread[THREAD][0] == "RUN_STARTED"
+    assert by_thread[other][0] == "RUN_STARTED"
+    assert by_thread[THREAD][-1] == "RUN_FINISHED"
+    assert by_thread[other][-1] == "RUN_FINISHED"
+
+
+async def test_the_server_can_start_a_run_every_tab_sees(broadcast_app: Any) -> None:
+    """What a voice agent does: a transcript, not a client, starts the run."""
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as comm:
+        await comm.subscribe(THREAD)
+        run_id = await BroadcastAgUiTopic.start_run(
+            "thread-1", run_input(run_id="", thread_id="ignored")
+        )
+        messages = await receive_json(comm, 6)
+
+    assert types_of(messages) == [
+        "RUN_STARTED",
+        "TEXT_MESSAGE_START",
+        "TEXT_MESSAGE_CONTENT",
+        "TEXT_MESSAGE_CONTENT",
+        "TEXT_MESSAGE_END",
+        "RUN_FINISHED",
+    ]
+    assert messages[0]["payload"]["threadId"] == "thread-1"
+    assert messages[0]["payload"]["runId"] == run_id
+    assert [m["seq"] for m in messages] == [1, 2, 3, 4, 5, 6]
+
+
+async def test_a_server_run_is_replayed_to_a_tab_joining_mid_run(
+    broadcast_app: Any, gate: asyncio.Event
+) -> None:
+    await BroadcastAgUiTopic.start_run("thread-1", run_input())
+    await asyncio.sleep(0.05)
+
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as late:
+        await late.subscribe(THREAD)
+        assert types_of(await receive_json(late, 3)) == [
+            "RUN_STARTED",
+            "TEXT_MESSAGE_START",
+            "TEXT_MESSAGE_CONTENT",
+        ]
+        gate.set()
+        assert types_of(await receive_json(late, 3))[-1] == "RUN_FINISHED"
+
+
+async def test_a_server_run_respects_one_run_per_thread(
+    broadcast_app: Any, gate: asyncio.Event
+) -> None:
+    from ..topics import ThreadBusyError
+
+    await BroadcastAgUiTopic.start_run("thread-1", run_input(run_id="first"))
+    with pytest.raises(ThreadBusyError) as refused:
+        await BroadcastAgUiTopic.start_run("thread-1", run_input(run_id="second"))
+    assert refused.value.active_run_id == "first"
+
+    # A client asking meanwhile is refused too.
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await receive_json(comm, 3)  # the replayed start of "first"
+        await comm.send_message(
+            AgUiRunMessage(payload=run_input(run_id="third")), topic=THREAD
+        )
+        refusal = await receive_until(comm, "ag_ui_event")
+        while refusal["payload"]["type"] != "RUN_ERROR":
+            refusal = await receive_until(comm, "ag_ui_event")
+        assert "first" in refusal["payload"]["message"]
+        gate.set()
+
+
+async def test_a_server_run_can_be_cancelled(
+    broadcast_app: Any, gate: asyncio.Event
+) -> None:
+    async with communicator(broadcast_app, PATH, BroadcastConsumer) as comm:
+        await comm.subscribe(THREAD)
+        await BroadcastAgUiTopic.start_run("thread-1", run_input())
+        await receive_json(comm, 3)
+        assert BroadcastAgUiTopic.running("thread-1")
+
+        assert BroadcastAgUiTopic.cancel_run("thread-1") is True
+        ended = await receive_until(comm, "ag_ui_event")
+
+    assert ended["payload"]["type"] == "RUN_ERROR"
+    assert ended["payload"]["message"] == "Run cancelled."
+    await asyncio.sleep(0.01)
+    assert not BroadcastAgUiTopic.running("thread-1")
+    # The thread is free again.
+    await BroadcastAgUiTopic.start_run("thread-1", run_input(run_id="again"))
+
+
+async def test_start_run_needs_broadcasting() -> None:
+    with pytest.raises(RuntimeError, match="broadcast_run_events"):
+        await ScriptedAgUiTopic.start_run("thread-1", run_input())

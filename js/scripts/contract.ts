@@ -3,9 +3,9 @@
 import type { TopicLike } from '@chanx-js/server';
 import { consumer, createChanx } from '@chanx-js/server';
 
-import { BroadcastNotificationTopic } from '../notification';
-import { PresenceTopic } from '../presence';
-import { RoomChatTopic } from '../room-chat';
+import { BroadcastNotificationTopic } from '../kits/notification';
+import { PresenceTopic } from '../kits/presence';
+import { RoomChatTopic } from '../kits/room-chat';
 
 const topics: Record<string, TopicLike> = {
   notification: BroadcastNotificationTopic,

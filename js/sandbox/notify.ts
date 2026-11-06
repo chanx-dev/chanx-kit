@@ -2,7 +2,7 @@
 //   npm --prefix js run sandbox:notify -- --user chris "Just for you"
 import { parseArgs } from 'node:util';
 
-import { notifyAll, notifyUser } from '../notification';
+import { notifyAll, notifyUser } from '../kits/notification';
 
 import { createSandbox, redisUrl } from './app';
 

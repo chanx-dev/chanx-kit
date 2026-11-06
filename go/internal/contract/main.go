@@ -9,9 +9,9 @@ import (
 	chanx "go.chanx.dev/v2"
 	"go.chanx.dev/v2/asyncapi"
 
-	"go.chanx.dev/kit/notification"
-	"go.chanx.dev/kit/presence"
-	"go.chanx.dev/kit/roomchat"
+	"go.chanx.dev/kit/kits/notification"
+	"go.chanx.dev/kit/kits/presence"
+	"go.chanx.dev/kit/kits/roomchat"
 )
 
 var topics = map[string]chanx.TopicHandler{

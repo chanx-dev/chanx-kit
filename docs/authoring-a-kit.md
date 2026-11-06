@@ -6,7 +6,7 @@ covers why the shape is what it is.
 ## The shape
 
 ```
-python/<package_name>/
+python/kits/<package_name>/
   kit.yaml               # registry metadata
   messages.py            # the wire contract
   topics.py              # the kit's Topic classes: handlers, auth, broadcasting
@@ -137,10 +137,10 @@ the sandbox's AsyncAPI schema and diffs. A payload change therefore shows up as 
 reviewable TS diff, and the author has to regenerate:
 
 ```bash
-npm --prefix sandbox/ui run gen
+npm --prefix ui/sandbox run gen
 ```
 
-This is why a new kit must be mounted in `sandbox/consumers.py`: a kit nobody mounts is
+This is why a new kit must be mounted in `python/sandbox/consumers.py`: a kit nobody mounts is
 absent from that schema and has no contract check at all. A test enforces it.
 
 Porting a kit to Go or JS keeps that contract: the port reuses the Python names, and

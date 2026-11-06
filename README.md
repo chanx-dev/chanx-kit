@@ -153,7 +153,7 @@ messages, hooks and caveats.
 
 ```bash
 uv sync
-npm --prefix sandbox/ui install && npm --prefix sandbox/ui run build
+npm --prefix ui/sandbox install && npm --prefix ui/sandbox run build
 uv run python -m sandbox
 ```
 
@@ -161,6 +161,9 @@ Open **http://localhost:8000**: a sidebar of demos grouped like the docs, each n
 the kits and consumer it runs, plus [AsyncAPI docs](http://localhost:8000/asyncapi) for
 the generated WebSocket API. Open the chat room in a second tab to watch history replay
 and the roster update live.
+
+The same UI runs on the Go and Node kits too: `go -C go/sandbox run . -framework gin` or
+`npm --prefix js run sandbox -- --framework hono`, any of their frameworks.
 
 ## Why it exists
 

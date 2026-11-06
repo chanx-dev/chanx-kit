@@ -16,9 +16,9 @@ build/
 .idea/
 .vscode/
 node_modules/
-sandbox/ui/dist/
+ui/sandbox/dist/
 site/
-sandbox/ui/asyncapi.json
+ui/sandbox/asyncapi.json
 
 # Local secrets: provider keys for scripts/live_check.py and the sandbox.
 .env

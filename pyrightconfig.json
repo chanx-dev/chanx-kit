@@ -3,7 +3,6 @@
     "python",
     "scripts",
     "tests",
-    "sandbox",
     "src",
     "docs",
     "templates/fastapi-react/app"
@@ -12,7 +11,7 @@
     "**/__pycache__",
     "**/node_modules",
     ".venv",
-    "python/pipecat_bridge"
+    "python/kits/pipecat_bridge"
   ],
   "typeCheckingMode": "strict",
   "pythonVersion": "3.11",
@@ -20,10 +19,20 @@
   "reportPrivateUsage": false,
   "executionEnvironments": [
     {
+      "root": "python/sandbox",
+      "extraPaths": [
+        "python"
+      ],
+      "reportMissingImports": "none",
+      "reportUnknownVariableType": "none",
+      "reportUnknownMemberType": "none"
+    },
+    {
       "root": "tests",
       "extraPaths": [
         ".",
-        "scripts"
+        "scripts",
+        "python"
       ],
       "reportUnknownVariableType": "none",
       "reportUnknownMemberType": "none",
@@ -35,28 +44,26 @@
       "root": "scripts",
       "reportUnknownVariableType": "none",
       "reportUnknownMemberType": "none",
-      "reportUnknownArgumentType": "none"
+      "reportUnknownArgumentType": "none",
+      "extraPaths": [
+        "python"
+      ]
     },
     {
       "root": "docs",
       "extraPaths": [
-        "."
+        ".",
+        "python"
       ],
       "reportUnknownVariableType": "none",
       "reportUnknownMemberType": "none",
       "reportUnknownArgumentType": "none"
     },
     {
-      "root": "python"
-    },
-    {
-      "root": "sandbox",
+      "root": "python",
       "extraPaths": [
-        "."
-      ],
-      "reportMissingImports": "none",
-      "reportUnknownVariableType": "none",
-      "reportUnknownMemberType": "none"
+        "python"
+      ]
     },
     {
       "root": "src"

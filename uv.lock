@@ -413,7 +413,7 @@ fast-channels = [
 [[package]]
 name = "chanx-kit"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "chanx" },
 ]

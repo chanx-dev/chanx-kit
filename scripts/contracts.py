@@ -35,7 +35,7 @@ def load_yaml(path: Path) -> dict[str, Any]:
 def defined_contracts() -> dict[str, tuple[str, str]]:
     """``name@version`` -> (kit directory, contract topic class)."""
     found: dict[str, tuple[str, str]] = {}
-    for manifest in sorted((REPO_ROOT / "python").glob("*/kit.yaml")):
+    for manifest in sorted((REPO_ROOT / "python" / "kits").glob("*/kit.yaml")):
         data = load_yaml(manifest)
         if data.get("defines"):
             found[str(data["defines"])] = (
@@ -48,7 +48,7 @@ def defined_contracts() -> dict[str, tuple[str, str]]:
 def consumers() -> dict[Path, str]:
     """UI kit directory -> the contract its ``contract.ts`` carries."""
     found: dict[Path, str] = {}
-    for manifest in sorted(UI_ROOT.glob("*/kit.yaml")):
+    for manifest in sorted((UI_ROOT / "kits").glob("*/kit.yaml")):
         consumes = load_yaml(manifest).get("consumes") or []
         if consumes:
             found[manifest.parent] = str(consumes[0])
@@ -67,7 +67,7 @@ def asyncapi_for(kit: str, topic_name: str) -> str:
     from fastapi.responses import JSONResponse
     from fastapi.testclient import TestClient
 
-    base = getattr(importlib.import_module(f"python.{kit}"), topic_name)
+    base = getattr(importlib.import_module(f"kits.{kit}"), topic_name)
     # Same name as the base, so nothing kit-specific leaks into the generated names.
     contract_topic = type(topic_name, (base,), {"pattern": "contract"})
 
@@ -134,7 +134,7 @@ def implementations() -> list[tuple[str, str, str]]:
     """``(language, kit id, contract)`` for every Go and JS kit implementing one."""
     found: list[tuple[str, str, str]] = []
     for language in PORT_SPECS:
-        for manifest in sorted((REPO_ROOT / language).glob("*/kit.yaml")):
+        for manifest in sorted((REPO_ROOT / language / "kits").glob("*/kit.yaml")):
             data = load_yaml(manifest)
             found += [
                 (language, str(data["name"]), str(c))
@@ -179,7 +179,7 @@ def main() -> int:
     parser.add_argument("spec_args", nargs="*", help=argparse.SUPPRESS)
     args = parser.parse_args()
 
-    sys.path.insert(0, str(REPO_ROOT))
+    sys.path.insert(0, str(REPO_ROOT / "python"))
     if args.command == "spec":
         print(asyncapi_for(*args.spec_args))
         return 0

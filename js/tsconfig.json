@@ -13,6 +13,6 @@
     "isolatedModules": true,
     "noEmit": true
   },
-  "include": ["*/**/*.ts", "scripts/*.ts"],
+  "include": ["kits/**/*.ts", "sandbox/**/*.ts", "scripts/*.ts"],
   "exclude": ["node_modules"]
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Drive the sandbox's voice panels in a real browser with Chrome's fake microphone.
 //
-//   npm run --prefix sandbox/ui build && uv run python -m sandbox --port 8000 &
+//   npm run --prefix ui/sandbox build && uv run python -m sandbox --port 8000 &
 //   PLAYWRIGHT=/path/to/node_modules/playwright/index.mjs node scripts/sandbox_voice_e2e.mjs http://127.0.0.1:8000
 //
 // The fake microphone plays a generated WAV (see speechWav). Needs full Chromium (not the headless shell, whose fake device takes seconds to open)

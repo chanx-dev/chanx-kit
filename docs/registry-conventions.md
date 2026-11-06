@@ -6,12 +6,12 @@ The index format is **copit's**, not ours. See
 chanx-kit makes *within* that format, and why.
 
 `scripts/registry.py` generates `python/copit-registry.json` from `python/registry.yaml` plus every
-`python/*/kit.yaml`, and validates the result against copit's schema
+`python/kits/*/kit.yaml`, and validates the result against copit's schema
 (`scripts/registry.schema.json`, a vendored copy) before writing it.
 
 ## Ids use dashes, directories use underscores
 
-`room-chat` is the id; `python/room_chat/` is the directory.
+`room-chat` is the id; `python/kits/room_chat/` is the directory.
 
 The directory name is what a user imports, so it has to be a valid Python identifier.
 The id appears on the command line, where dashes read better. CI checks that
@@ -23,7 +23,7 @@ copit add @chanx-kit/room-chat        # then: from .ws_kits.room_chat import ...
 
 ## Tier is metadata, not a directory
 
-Every kit sits directly in `python/`. `tier: core` or `tier: contrib` lives in
+Every kit sits directly in `python/kits/`. `tier: core` or `tier: contrib` lives in
 `kit.yaml`.
 
 Two reasons, and the second one is the load-bearing one:
@@ -45,7 +45,7 @@ Django models, migrations, admin and DRF views has nothing to port to fast-chann
 Those declare the variant they need:
 
 ```yaml
-# python/django_message_store/kit.yaml
+# python/kits/django_message_store/kit.yaml
 only_variants:
   - django
 ```
@@ -93,7 +93,7 @@ it in a kit's `requires` would copy a test harness into every project, including
 that never asked for tests. So the kit declares it on the group instead:
 
 ```yaml
-# python/presence/kit.yaml
+# python/kits/presence/kit.yaml
 optional:
   tests:
     requires:
@@ -144,11 +144,11 @@ the contract. The metadata lives in `kit.yaml` only and is checked by
 `scripts/registry.py`; it never reaches the copit index.
 
 ```yaml
-# python/notification/kit.yaml: the kit that owns the messages
+# python/kits/notification/kit.yaml: the kit that owns the messages
 defines: notification@1
 contract_topic: NotificationTopicBase   # the topic class whose messages are the contract
 
-# python/pydantic_ai_ag_ui/kit.yaml: a provider reusing another kit's messages
+# python/kits/pydantic_ai_ag_ui/kit.yaml: a provider reusing another kit's messages
 implements: [ag-ui@1]
 
 # ui/notification/kit.yaml
@@ -179,7 +179,8 @@ index by `scripts/shadcn.py`.
 ## Go and JS registries
 
 Each language is a registry of its own folder: `python/`, `ui/`, `go/` and `js/`, each
-with a `registry.yaml` and its published `copit-registry.json`. The root
+with a `registry.yaml`, its published `copit-registry.json`, the kits in `kits/` and the
+language's sandbox in `sandbox/` (`ui/sandbox` is the demo UI all three servers share). The root
 `copit-registry.json` is the Python index plus a `registries` catalog naming the others,
 so `copit registry add chanx-kit-go github:chanx-dev/chanx-kit@<tag>` finds the Go one
 by name (copit 0.10), and existing setups without `--index` keep reading Python.
@@ -198,7 +199,7 @@ by name (copit 0.10), and existing setups without `--index` keep reading Python.
   install target.
 
 ```yaml
-# go/presence/kit.yaml
+# go/kits/presence/kit.yaml
 implements: [presence@1]
 contract_topic: PresenceTopic
 ```

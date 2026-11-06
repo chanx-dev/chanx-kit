@@ -296,7 +296,7 @@ def test_every_kit_exposes_a_topic() -> None:
     for name, component in registry_module.build()[0].components.items():
         package = pathlib.Path(component["path"]).name
         try:
-            module = importlib.import_module(f"python.{package}.topics")
+            module = importlib.import_module(f"kits.{package}.topics")
         except ModuleNotFoundError:
             continue
 

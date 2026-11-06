@@ -271,7 +271,7 @@ def build(layout: Layout = PYTHON) -> tuple[Registry, list[Problem]]:
     config = load_yaml(layout.manifest)
     problems: list[Problem] = []
 
-    root = REPO_ROOT / str(config.get("root", layout.folder))
+    root = REPO_ROOT / str(config.get("root", f"{layout.folder}/kits"))
     install = config.get("install", {})
     excludes = list(install.get("exclude", []))
     optional_groups: dict[str, list[str]] = {

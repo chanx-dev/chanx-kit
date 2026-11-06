@@ -7,7 +7,7 @@ homepage: https://github.com/chanx-dev/chanx-kit
 
 ecosystem: go
 
-root: go
+root: go/kits
 default_tier: core
 
 variants: []
@@ -19,7 +19,7 @@ tier_rules:
 install:
   target: internal/wskits
   # Go kits import each other by this path; copit rewrites it to the project module.
-  module_path: go.chanx.dev/kit
+  module_path: go.chanx.dev/kit/kits
   exclude:
     - "kit.yaml"
   optional:

@@ -7,7 +7,7 @@ homepage: https://github.com/chanx-dev/chanx-kit
 
 ecosystem: node
 
-root: ui
+root: ui/kits
 default_tier: core
 
 variants: [react]

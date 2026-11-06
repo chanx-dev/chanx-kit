@@ -22,7 +22,7 @@ import (
 	chanx "go.chanx.dev/v2"
 	"go.chanx.dev/v2/asyncapi"
 
-	"go.chanx.dev/kit/notification"
+	"go.chanx.dev/kit/kits/notification"
 )
 
 var info = asyncapi.Info{Title: "chanx-kit sandbox", Version: "0.1.0", Description: "WebSocket API exposed by the chanx-kit Go sandbox."}
@@ -35,7 +35,7 @@ func main() {
 	}
 	framework := flag.String("framework", "nethttp", "nethttp, chi, gin, echo or fiber")
 	addr := flag.String("addr", ":8000", "listen address")
-	ui := flag.String("ui", "../../sandbox/ui/dist", "the built sandbox UI")
+	ui := flag.String("ui", "../../ui/sandbox/dist", "the built sandbox UI")
 	flag.Parse()
 
 	serve, ok := frameworks[*framework]
@@ -103,7 +103,7 @@ func writeJSON(w http.ResponseWriter, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-// loadEnv reads KEY=VALUE lines the environment does not already set.
+// loadEnv reads KEY=VALUE lines the environment does not already set, even to "".
 func loadEnv(path string) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -113,7 +113,7 @@ func loadEnv(path string) {
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		key, value, ok := strings.Cut(strings.TrimSpace(scanner.Text()), "=")
-		if ok && !strings.HasPrefix(key, "#") && os.Getenv(key) == "" {
+		if _, set := os.LookupEnv(key); ok && !set && !strings.HasPrefix(key, "#") {
 			_ = os.Setenv(key, value)
 		}
 	}

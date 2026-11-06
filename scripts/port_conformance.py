@@ -1,13 +1,8 @@
 #!/usr/bin/env python
-"""Install every Go and JS kit with copit into throwaway projects, tests included, then
-build and test them there: catching an import that only resolves in this repo, a
-dependency nobody declared, or a file the index forgot to publish.
+"""Install every Go and JS kit, tests included, into fresh projects; build and test them.
 
-Needs a copit with the go ecosystem and ``module_path``; point COPIT at a local build
-until one is released.
-
-    COPIT=../copit/target/release/copit uv run python scripts/port_conformance.py
-    uv run python scripts/port_conformance.py --keep go    # one language, keep the project
+COPIT=../copit/target/release/copit uv run python scripts/port_conformance.py
+uv run python scripts/port_conformance.py --keep go    # one language, keep the project
 """
 
 from __future__ import annotations

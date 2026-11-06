@@ -5,8 +5,7 @@ import (
 	"sync"
 )
 
-// MessageStore persists room history. Implement it against your database; the
-// in-memory default is for demos and tests.
+// MessageStore persists room history; implement it against your database.
 type MessageStore interface {
 	Append(ctx context.Context, entry ChatEntry) error
 	// Backlog is up to limit recent messages, oldest first.

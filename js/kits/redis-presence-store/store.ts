@@ -21,10 +21,7 @@ export interface RedisPresenceStoreOptions {
   ttl?: number;
 }
 
-/**
- * The presence roster in Redis: one hash per scope of connection id to member JSON,
- * laid out as the Python kit lays it out, so Python, Go and Node servers share it.
- */
+/** The presence roster in Redis, in the Python kit's layout, so every server shares it. */
 export class RedisPresenceStore implements PresenceStore {
   private readonly keyPrefix: string;
   private readonly ttl: number;

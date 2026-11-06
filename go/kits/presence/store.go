@@ -6,8 +6,7 @@ import (
 	"sync"
 )
 
-// PresenceStore backs the roster of each scope. The in-memory default is wrong once
-// you run two processes: use the redis-presence-store kit or your own.
+// PresenceStore holds each scope's roster; the in-memory default is per process.
 type PresenceStore interface {
 	// Add records a connection; true when the member became newly present, so one
 	// user with three tabs produces one join.

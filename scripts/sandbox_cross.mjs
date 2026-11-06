@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-// Python, Go and JS sandboxes on one Redis: notifications and chat must cross between
-// them, since the kits keep the same group names and the layers the same prefix.
+// Python (:8000), Go (:8001) and JS (:8002) sandboxes on one Redis reach each other's clients.
 //
-//   docker compose up -d   # then each sandbox with REDIS_URL, on :8000, :8001, :8002
 //   node scripts/sandbox_cross.mjs
 
 import { execFileSync } from 'node:child_process';

@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-"""Generate each UI kit's ``contract.ts`` with the codegen apps use, and check that
-every Go and JS kit implementing a contract generates the same types.
+"""Generate each UI kit's ``contract.ts``; check Go and JS kits generate the same types.
 
-python scripts/contracts.py build|check    # needs the fastapi extra and npm ci --prefix ui
-                                           # check also needs go and npm ci --prefix js
+python scripts/contracts.py build|check    # needs npm ci in ui/ (and js/, go for check)
 """
 
 import argparse

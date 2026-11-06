@@ -1,9 +1,6 @@
 import type { PresenceMember } from './messages';
 
-/**
- * The roster of each scope. The in-memory default is wrong once you run two
- * processes: use the redis-presence-store kit or your own.
- */
+/** Each scope's roster; the in-memory default is per process. */
 export interface PresenceStore {
   /** Record a connection; true when the member became newly present. */
   add(scope: string, connectionId: string, member: PresenceMember): Promise<boolean>;

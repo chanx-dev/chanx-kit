@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-// Drive a running sandbox (Python, Go or JS) over raw websockets: notifications, the
-// chat room and presence. With a notify command, also a push from another process.
+// Drive a running sandbox over raw websockets; a notify command adds a cross-process push.
 //
 //   node scripts/sandbox_smoke.mjs http://127.0.0.1:8000 [notify command...]
 //   node scripts/sandbox_smoke.mjs http://127.0.0.1:8000 uv run python -m sandbox.send_notification

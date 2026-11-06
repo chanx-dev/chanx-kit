@@ -36,10 +36,7 @@ export function memberOf(conn: Connection<string, unknown>): PresenceMemberInput
   return { id: conn.channelName, name: 'anonymous' };
 }
 
-/**
- * Who is present in `presence:<scope>`. A subscriber gets `presence_state`, then
- * `presence_join` / `presence_leave`; a member with several connections joins once.
- */
+/** `presence:<scope>`: the roster on subscribe, then joins and leaves, once per member. */
 export function presenceTopic<User = unknown>(options: PresenceTopicOptions<User> = {}) {
   const store = options.store ?? new InMemoryPresenceStore();
   const member = options.member ?? memberOf;

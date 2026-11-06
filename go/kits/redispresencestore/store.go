@@ -1,7 +1,4 @@
-// Package redispresencestore shares the presence roster across processes through Redis.
-//
-// Each scope is a hash of connection id to member JSON, laid out as the Python kit lays
-// it out, so Python, Go and Node servers on one Redis see one roster.
+// Package redispresencestore keeps the presence roster in Redis, in the Python kit's layout.
 package redispresencestore
 
 import (

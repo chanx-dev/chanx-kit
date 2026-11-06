@@ -10,8 +10,7 @@ import (
 // DefaultStore is the roster a PresenceTopic without a Store uses.
 var DefaultStore PresenceStore = NewInMemoryPresenceStore()
 
-// PresenceTopic is presence:<scope>. A subscriber gets presence_state with the roster,
-// then presence_join and presence_leave; a member with several connections joins once.
+// PresenceTopic is presence:<scope>: the roster on subscribe, then joins and leaves, once per member.
 type PresenceTopic struct {
 	chanx.BaseTopic `pattern:"presence:{scope}" description:"Who is present in a scope."`
 	// Store holds the roster; DefaultStore when nil.
@@ -34,8 +33,7 @@ func (t PresenceTopic) member(conn *chanx.Conn) PresenceMember {
 	return MemberOf(conn)
 }
 
-// MemberOf is the default member: a string user, or one with UserID and UserName
-// methods; anonymous, by connection, otherwise.
+// MemberOf is a string user, or one with UserID and UserName; anonymous by connection otherwise.
 func MemberOf(conn *chanx.Conn) PresenceMember {
 	id, name := "", ""
 	switch user := conn.User.(type) {

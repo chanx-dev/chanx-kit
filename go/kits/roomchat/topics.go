@@ -10,8 +10,7 @@ import (
 // DefaultStore is the history a RoomChatTopic without a Store uses.
 var DefaultStore MessageStore = NewInMemoryMessageStore()
 
-// RoomChatTopic is chat:<room>. A subscriber gets chat_backlog with recent messages,
-// then chat_message as they arrive.
+// RoomChatTopic is chat:<room>: recent history on subscribe, then each new message.
 type RoomChatTopic struct {
 	chanx.BaseTopic `pattern:"chat:{room}" description:"Chat for one room."`
 	// Store holds the history; DefaultStore when nil. The default is not durable.
@@ -47,8 +46,7 @@ func (t RoomChatTopic) author(conn *chanx.Conn) ChatAuthor {
 	return AuthorOf(conn)
 }
 
-// AuthorOf is the default author: a string user, or one with UserID and UserName
-// methods; anonymous, by connection, otherwise.
+// AuthorOf is a string user, or one with UserID and UserName; anonymous by connection otherwise.
 func AuthorOf(conn *chanx.Conn) ChatAuthor {
 	id, name := "", ""
 	switch user := conn.User.(type) {

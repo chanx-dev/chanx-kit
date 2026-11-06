@@ -1,11 +1,8 @@
 #!/usr/bin/env python
-"""Render the Go and JS starter templates from ``templates/_shared``.
+"""Render the Go and JS templates: fastapi-react's ``web/`` on each framework.
 
-Every template is the fastapi-react one on another server: the same ``web/`` and the
-same notification kit, mounted on one framework each.
-
-    python scripts/templates.py build    # render, then go mod tidy / npm install and codegen
-    python scripts/templates.py check    # fail if a rendered file differs from the template
+python scripts/templates.py build    # render, then go mod tidy / npm install and codegen
+python scripts/templates.py check    # fail if a rendered file differs from the template
 """
 
 from __future__ import annotations

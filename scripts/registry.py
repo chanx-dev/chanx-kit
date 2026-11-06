@@ -1,14 +1,8 @@
 #!/usr/bin/env python
-"""Build and validate the component registries.
+"""Build and validate each folder's registry, and the root index with its catalog.
 
-One registry per folder (``python/``, ``ui/``, ``go/``, ``js/``): its ``registry.yaml``
-plus every ``*/kit.yaml``, published as that folder's ``copit-registry.json``. The root
-``copit-registry.json`` is the Python index plus a ``registries`` catalog, the default
-copit fetches. Contracts (``defines`` / ``implements`` / ``consumes``) are checked
-across all of them, and stay out of the indexes.
-
-    python scripts/registry.py build     # regenerate every index
-    python scripts/registry.py check     # validate, and fail if an index is stale
+python scripts/registry.py build     # regenerate every index
+python scripts/registry.py check     # validate, and fail if an index is stale
 """
 
 from __future__ import annotations

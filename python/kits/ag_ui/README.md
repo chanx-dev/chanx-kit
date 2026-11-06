@@ -268,6 +268,14 @@ Pydantic aliases, which rename only declared fields.
 
 Set `send_by_alias = False` only if you are deliberately talking to a non-AG-UI client.
 
+## AG-UI 1.0
+
+The kit speaks AG-UI 1.0 (`ag-ui-protocol>=1.0`), as contract **ag-ui@2**. Coming from
+ag-ui@1 (protocol 0.1.x): `THINKING_*` events are now `REASONING_*`, user content parts
+are `TextPart`, `ImagePart`, `AudioPart`, `VideoPart` and `DocumentPart`, and
+`STATE_DELTA` / `ACTIVITY_DELTA` patches are typed JSON Patch operations. Update the
+`ag-ui` UI kit with it; the Go and Node ports speak ag-ui@2 too.
+
 ## Messages
 
 | Action | Direction | Payload |

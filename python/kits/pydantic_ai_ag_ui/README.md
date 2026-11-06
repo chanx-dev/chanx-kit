@@ -39,7 +39,7 @@ class AgentConsumer(AsyncJsonWebsocketConsumer[AgUiEventMessage]):
 ```
 
 A client subscribes to `agui:thread:<thread_id>` and sends `ag_ui_run`. Streamed
-text, tool calls and thinking all arrive as AG-UI events, so an AG-UI frontend needs
+text, tool calls and reasoning (`REASONING_*`) all arrive as AG-UI events, so an AG-UI frontend needs
 no changes.
 
 ## Approvals, without a protocol of your own

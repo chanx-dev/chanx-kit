@@ -22,3 +22,7 @@ ui/sandbox/asyncapi.json
 
 # Local secrets: provider keys for scripts/live_check.py and the sandbox.
 .env
+
+# Local workspaces pointing at sibling checkouts.
+go/go.work
+go/go.work.sum

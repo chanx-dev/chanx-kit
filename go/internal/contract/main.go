@@ -9,12 +9,14 @@ import (
 	chanx "go.chanx.dev/v2"
 	"go.chanx.dev/v2/asyncapi"
 
+	"go.chanx.dev/kit/kits/agui"
 	"go.chanx.dev/kit/kits/notification"
 	"go.chanx.dev/kit/kits/presence"
 	"go.chanx.dev/kit/kits/roomchat"
 )
 
 var topics = map[string]chanx.TopicHandler{
+	"ag-ui":        agui.AgUiTopic{},
 	"notification": notification.BroadcastNotificationTopic{},
 	"presence":     presence.PresenceTopic{},
 	"room-chat":    roomchat.RoomChatTopic{},

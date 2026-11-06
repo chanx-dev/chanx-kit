@@ -7,6 +7,7 @@ python scripts/contracts.py build|check    # needs npm ci in ui/ (and js/, go fo
 import argparse
 import difflib
 import importlib
+import json
 import re
 import subprocess
 import sys
@@ -94,6 +95,19 @@ PROTOCOL_TYPES = re.compile(
     re.M | re.S,
 )
 DOC_COMMENT = re.compile(r"^[ \t]*/\*\*.*\*/\n", re.M)
+ALIAS = re.compile(r"^export type (\w+) = (.+);\n\n?", re.M)
+
+
+def inline_aliases(ts: str) -> str:
+    """Inline a type alias used once: naming a union is not a wire difference."""
+    for name, union in ALIAS.findall(ts):
+        declaration_and_use = 2
+        if len(re.findall(rf"\b{name}\b", ts)) == declaration_and_use:
+            ts = re.sub(rf"^export type {name} = .+;\n\n?", "", ts, flags=re.M)
+            ts = re.sub(rf"\b{name}\b", union.replace("\\", "\\\\"), ts)
+    return ts
+
+
 # Differences a server library cannot avoid yet: (language, kit) -> (Python's line, the port's).
 KNOWN_GAPS = {
     # chanx-js requires a payload even when its schema has a default.
@@ -109,6 +123,51 @@ PORT_SPECS = {
     "go": (REPO_ROOT / "go", ["go", "run", "./internal/contract"]),
     "js": (REPO_ROOT / "js", ["npx", "--no-install", "tsx", "scripts/contract.ts"]),
 }
+
+
+# Ports that carry a contract's JSON Schema, for unions their schema libraries cannot express.
+SCHEMA_EXPORTS = {
+    "ag-ui@2": [
+        REPO_ROOT / "js" / "kits" / "ag-ui" / "schema.ts",
+        REPO_ROOT / "go" / "kits" / "agui" / "schema.json",
+    ],
+}
+
+
+def exported_schema(spec_json: str) -> dict[str, Any]:
+    """Each message's payload schema by message name, sharing ``$defs``."""
+    schemas: dict[str, Any] = json.loads(spec_json)["components"]["schemas"]
+    messages = {
+        name: schema
+        for name, schema in schemas.items()
+        if "action" in schema.get("properties", {})
+    }
+    # Inline payloads stay inline: a title would make some generators hoist them.
+    exported = {
+        name: {
+            k: v for k, v in message["properties"]["payload"].items() if k != "title"
+        }
+        for name, message in messages.items()
+    }
+    exported["$defs"] = {
+        name: schema
+        for name, schema in sorted(schemas.items())
+        if name not in messages and name not in {"ProblemDetails", "ValidationFailure"}
+    }
+    raw = json.dumps(exported, indent=2)
+    return json.loads(raw.replace('"#/components/schemas/', '"#/$defs/'))
+
+
+def render_export(target: Path, kit: str, contract: str, schema: dict[str, Any]) -> str:
+    body = json.dumps(schema, indent=2)
+    if target.suffix == ".json":
+        return body + "\n"
+    return (
+        HEADER.format(kit=kit.replace("_", "-"), contract=contract)
+        + "\nexport const contractSchema: Record<string, unknown> = "
+        + body
+        + ";\n"
+    )
 
 
 def python_spec(kit: str, topic_name: str) -> str:
@@ -190,12 +249,14 @@ def main() -> int:
             return 1
         kit, topic_name = defined[contract]
         rendered = render(kit, contract, python_spec(kit, topic_name))
-        target = directory / "contract.ts"
-        if args.command == "build":
-            target.write_text(rendered)
-            print(f"Wrote {target.relative_to(REPO_ROOT)} ({contract})")
-        elif not target.exists() or target.read_text() != rendered:
-            stale.append(str(target.relative_to(REPO_ROOT)))
+        stale += sync(directory / "contract.ts", rendered, args.command, contract)
+
+    for contract, targets in SCHEMA_EXPORTS.items():
+        kit, topic_name = defined[contract]
+        schema = exported_schema(python_spec(kit, topic_name))
+        for target in targets:
+            rendered = render_export(target, kit, contract, schema)
+            stale += sync(target, rendered, args.command, contract)
 
     if stale:
         print(
@@ -212,6 +273,17 @@ def main() -> int:
     return 0
 
 
+def sync(target: Path, rendered: str, command: str, contract: str) -> list[str]:
+    """Write ``target`` on build; on check, name it when it differs."""
+    if command == "build":
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(rendered)
+        print(f"Wrote {target.relative_to(REPO_ROOT)} ({contract})")
+        return []
+    current = target.read_text() if target.exists() else ""
+    return [] if current == rendered else [str(target.relative_to(REPO_ROOT))]
+
+
 def port_drift(defined: dict[str, tuple[str, str]]) -> list[str]:
     """Go and JS kits whose contract types differ from the Python kit's."""
     drifted: list[str] = []
@@ -224,6 +296,7 @@ def port_drift(defined: dict[str, tuple[str, str]]) -> list[str]:
         actual = DOC_COMMENT.sub(
             "", render(python_kit, contract, port_spec(language, kit))
         )
+        expected, actual = inline_aliases(expected), inline_aliases(actual)
         for python_line, port_line in KNOWN_GAPS.get((language, kit), []):
             expected = expected.replace(python_line, port_line)
         if actual != expected:

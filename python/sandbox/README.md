@@ -125,3 +125,15 @@ A new kit also has to be mounted in `consumers.py`. A kit that is absent from th
 absent from the AsyncAPI schema and therefore has no contract check at all, so
 `tests/test_sandbox.py` asserts every kit's messages are reachable from here.
 
+## Checking it end to end
+
+With a sandbox running, these drive it for real; each prints one line per check:
+
+```bash
+node scripts/sandbox_smoke.mjs http://127.0.0.1:8000 uv run python -m sandbox.send_notification
+node scripts/sandbox_ui_e2e.mjs http://127.0.0.1:8000     # a browser, through Playwright
+node scripts/sandbox_cross.mjs    # Python :8000, Go :8001 and JS :8002 on one Redis
+```
+
+Drop the notify command to skip the cross-process push. `sandbox_ui_e2e.mjs` takes the
+Playwright module from `PLAYWRIGHT`, as `sandbox_voice_e2e.mjs` does.

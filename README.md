@@ -5,15 +5,18 @@
   </picture>
 </h1>
 
-A collection of best-practice, reusable WebSocket components.
+**Realtime features you copy into your app.** Notifications, chat, presence, AI agent
+streaming and voice, for Node, Python and Go servers, with React UI that works with any
+of them.
 
 [![CI](https://github.com/chanx-dev/chanx-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/chanx-dev/chanx-kit/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/python-3.11%20to%203.14-blue)](https://github.com/chanx-dev/chanx-kit)
+[![Servers](https://img.shields.io/badge/servers-Node%20%C2%B7%20Python%20%C2%B7%20Go-blue)](https://kit.chanx.dev/kits/#catalog)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **[Documentation](https://kit.chanx.dev/)** ·
 [Browse the kits](https://kit.chanx.dev/kits/) ·
-[Getting started](https://kit.chanx.dev/getting-started/)
+[Build one in 15 minutes](https://kit.chanx.dev/getting-started/) ·
+[For AI assistants: llms.txt](https://kit.chanx.dev/llms.txt)
 
 Notifications, chat with replayed history, a presence roster, an agent streaming tokens
 to the browser: add the one you need, in a single command, and own the code it copies in.
@@ -59,23 +62,24 @@ Use cases:
 
 ## Start a new project
 
-A FastAPI backend and a React client with the notification kit already wired end to end,
-the client typed from the server's schema:
+Install [copit](https://github.com/huynguyengl99/copit), the CLI that copies starters and
+kits in (also on npm as `@copit/cli` and on PyPI as `copit`):
 
 ```bash
-uvx copit create gh:chanx-dev/chanx-kit@main/templates/fastapi-react my-app
+curl -fsSL https://raw.githubusercontent.com/huynguyengl99/copit/main/install.sh | bash
 ```
 
-No copit? `npx tiged chanx-dev/chanx-kit/templates/fastapi-react my-app` copies the
-same folder. Either way the project comes with its own `copit.toml`, so adding kits works
-from the first `cd`.
+Then create a server and a React client with the notification kit wired end to end, the
+client typed from the server's schema:
 
-Its [README](templates/fastapi-react/README.md) takes it from there: two commands to run
-it, and one to add the next kit.
+```bash
+copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/express-react my-app
+```
 
-On Go or Node, pick the template for your framework: `go-nethttp-react`,
-`go-chi-react`, `go-gin-react`, `go-echo-react`, `go-fiber-react`, `express-react`,
-`fastify-react` or `hono-react`.
+Swap `express-react` for your framework: `fastify-react`, `hono-react`,
+`fastapi-react`, `django-react`, `go-nethttp-react`, `go-chi-react`, `go-gin-react`,
+`go-echo-react` or `go-fiber-react`. The project comes with its own `copit.toml`, so
+adding kits works from the first `cd`, and its README has the commands to run it.
 
 ## Getting started
 
@@ -134,6 +138,7 @@ once as well ([UI kits](https://kit.chanx.dev/ui-kits/)).
 | Notifications | `copit add @chanx-kit/notification @chanx-kit-ui/notification` |
 | Chat room with a roster | `copit add @chanx-kit/room-chat @chanx-kit-ui/chat` |
 | Presence | `copit add @chanx-kit/presence @chanx-kit-ui/presence` |
+| Agent streaming over AG-UI | `copit add @chanx-kit/ag-ui @chanx-kit-ui/ag-ui` |
 | AI agent over AG-UI | `copit add @chanx-kit/pydantic-ai-ag-ui @chanx-kit-ui/ag-ui` |
 | Live captions | `copit add @chanx-kit/deepgram @chanx-kit-ui/transcriber --only stt` |
 | Text to speech | `copit add @chanx-kit/elevenlabs @chanx-kit-ui/player --only tts` |

@@ -1,95 +1,174 @@
 ---
 hide:
   - navigation
+  - toc
 ---
 
 # ![chanx-kit](assets/brand/chanx-kit-wordmark.svg#only-light){ .hero-wordmark } ![chanx-kit](assets/brand/chanx-kit-wordmark-dark.svg#only-dark){ .hero-wordmark }
 
-*Pronounced "chan-X kit": a collection of composable, copy-in WebSocket kits for
-[chanx](https://github.com/chanx-dev/chanx) (**CHAN**nels-e**X**tension).*
+**Realtime features you copy into your app.** Notifications, chat, presence, AI agent
+streaming and voice, for Node, Python and Go servers, with React UI that works with any
+of them.
+{ .hero-lead }
 
-Instead of installing a framework that owns your consumers, you copy a kit into your
-project and own it. No hidden abstractions, no dependency you cannot inspect, and an
-install footprint that is exactly what you used.
+[Build one in 15 minutes](getting-started.md){ .md-button .md-button--primary }
+[Browse the kits](kits/index.md){ .md-button }
 
-<div class="grid cards" markdown>
+## Compose features, not plumbing
 
--   :material-download: **Copy, don't install**
+Each kit is one feature. Add as many as you need, list them on the same WebSocket route,
+and change any of them in place. Here, a chat room and its live roster:
 
-    ---
+=== "Node"
 
-    `copit add @chanx-kit/notification` drops readable source into your project.
-    Edit it, delete half of it, rename things. It's yours.
+    ```bash
+    copit add @chanx-kit-js/room-chat @chanx-kit-js/presence @chanx-kit-ui/chat
+    ```
 
--   :material-language-typescript: **Typed end to end**
+    ```ts
+    // Tuned in place; swap its store the same way.
+    const Chat = roomChatTopic({ backlogLimit: 100 });
 
-    ---
+    export const room = consumer('/ws/rooms/{room}', {
+      name: 'room',
+      authenticate,
+      topics: [Chat, PresenceTopic],
+    });
 
-    pyright strict with no suppressions, and TypeScript types generated from the
-    server's own AsyncAPI schema.
+    // From a worker, a webhook, anywhere:
+    await Chat.postToRoom(chanx, 'general', 'Deploy finished', { id: 'ci' });
+    ```
 
--   :material-swap-horizontal: **Django, FastAPI, Go and Node**
+=== "Python"
 
-    ---
+    ```bash
+    copit add @chanx-kit/room-chat @chanx-kit/presence @chanx-kit-ui/chat
+    ```
 
-    Kits import only `chanx.core`, so one component runs on Channels and
-    fast-channels. The core kits are ported to [Go](go/index.md) and
-    [Node](js/index.md), checked in CI to speak the same messages.
+    ```python
+    # Tuned in place; swap its store the same way.
+    class ChatTopic(RoomChatTopic):
+        backlog_limit = 100
 
--   :material-puzzle: **Composable**
 
-    ---
+    RoomMessage = ChatMessage | PresenceJoinMessage | PresenceLeaveMessage
 
-    Stack as many kits into one consumer as you like, with no type errors and no
-    `# pyright: ignore`. In the browser, their UI kits share one socket.
+
+    class RoomConsumer(AsyncJsonWebsocketConsumer[RoomMessage]):
+        topics = [ChatTopic, PresenceTopic]
+
+
+    # From a worker, a signal, anywhere:
+    await ChatTopic.post_to_room("general", "Deploy finished", ChatAuthor(id="ci"))
+    ```
+
+=== "Go"
+
+    ```bash
+    copit add @chanx-kit-go/room-chat @chanx-kit-go/presence @chanx-kit-ui/chat
+    ```
+
+    ```go
+    // Tuned in place; swap its Store the same way.
+    var chat = roomchat.RoomChatTopic{BacklogLimit: 100}
+
+    func (RoomConsumer) Topics() []chanx.TopicHandler {
+    	return []chanx.TopicHandler{chat, presence.PresenceTopic{}}
+    }
+
+    // From a worker, a handler, anywhere:
+    chat.PostToRoom(ctx, pub, "general", "Deploy finished", roomchat.ChatAuthor{ID: "ci"})
+    ```
+
+In the browser, the same for every server. Both hooks share one socket:
+
+```tsx
+const { entries, status, send } = useChat(room, room.topics.roomChatTopic.with({ room: 'general' }), options);
+const { members } = usePresence(room, room.topics.presenceTopic.with({ scope: 'general' }), options);
+return <ChatRoom entries={entries} status={status} onSend={send} members={members} self={me} />;
+```
+
+Each topic keeps its own handlers and authorization, so either kit works without the
+other, and the next feature (notifications, an AI agent) is one more line in `topics`.
+
+## What you can add
+
+<div class="grid cards three compact" markdown>
+
+-   **[Notifications](kits/notification.md)**
+
+    Push to a user's open tabs from a worker or another service.
+
+    <span class="servers">Node · Python · Go</span>
+
+-   **[Chat room](chat-room.md)**
+
+    History replayed on join, then every message live.
+
+    <span class="servers">Node · Python · Go</span>
+
+-   **[Presence](kits/presence.md)**
+
+    Who is in a room, document or tenant, as it changes.
+
+    <span class="servers">Node · Python · Go</span>
+
+-   **[Agent streaming](agent-streaming.md)**
+
+    Any agent's events to the browser over AG-UI; cancel, share a run.
+
+    <span class="servers">Node · Python · Go</span>
+
+-   **[Pydantic AI agent](kits/pydantic-ai-ag-ui.md)**
+
+    A Pydantic AI agent over AG-UI, approvals included.
+
+    <span class="servers">Python</span>
+
+-   **[Voice](voice.md)**
+
+    Live captions, text to speech, a voice agent you can interrupt.
+
+    <span class="servers">Python</span>
+
+-   **[Every kit :material-arrow-right:](kits/index.md#catalog)**
+
+    Stores, providers and the rest, with the servers each runs on.
 
 </div>
 
-## Start a new project
+## Why chanx-kit
 
-```bash
-uvx copit create gh:chanx-dev/chanx-kit@main/templates/fastapi-react my-app
-```
+<div class="grid cards three" markdown>
 
-FastAPI and React, with the notification kit wired end to end. Go and Node versions
-come in one template per framework. [Run it](getting-started.md#start-a-new-project).
+-   :material-pipe-wrench: **Stop rebuilding the plumbing**
 
-## Or add a kit in one minute
+    ---
 
-```bash
-copit add @chanx-kit/notification
-```
+    Groups, per-subscriber authorization, state on connect, cleanup on disconnect,
+    reaching a browser from a worker: written once, tested, on Express, Fastify, Hono,
+    FastAPI, Django, net/http, gin, Echo and Fiber.
 
-```python
-from chanx.fast_channels.websocket import AsyncJsonWebsocketConsumer
+-   :material-file-code-outline: **Own the code**
 
-from .ws_kits.notification import NotificationMessage, UserNotificationTopic
+    ---
 
+    One command copies readable source into your project. Edit it, delete half of it.
+    No framework owns your connections.
 
-class AppConsumer(AsyncJsonWebsocketConsumer[NotificationMessage]):
-    channel_layer_alias = "default"
-    topics = [UserNotificationTopic]
-```
+-   :material-handshake-outline: **Both ends always agree**
 
-Then, from a signal, a worker, or another service, with the consumer never imported:
+    ---
 
-```python
-await UserNotificationTopic.notify_user(
-    user.id, NotificationPayload(title="Build finished")
-)
-```
+    The browser's types come from your server's schema, and every server language is
+    checked against the same messages. Swap Node for Go and the UI does not notice.
 
-## UI kits
+</div>
 
-The browser half, React first, over a framework-free core. Each binds to a contract,
-so the transcriber UI works with Deepgram, ElevenLabs or OpenAI alike, and kits build on
-each other. [UI kits](ui-kits.md).
+How the pieces fit: [how it works](how-it-works.md). Using an AI coding assistant? Point it
+at [`llms.txt`](llms.txt), or every page at once in [`llms-full.txt`](llms-full.txt).
 
-## Voice, too
-
-Microphone to captions, text to speech for every listener, and an AG-UI agent you can
-talk to and interrupt. Deepgram, ElevenLabs or OpenAI, with the key on your server,
-and one base class to switch. [Add voice](voice.md).
-
-[Browse the kits](kits/index.md){ .md-button .md-button--primary }
-[Getting started](getting-started.md){ .md-button }
+<small>Built on [chanx](https://github.com/chanx-dev/chanx),
+[chanx-go](https://go.chanx.dev/) and [chanx-js](https://js.chanx.dev/), one protocol
+across three languages, and copied in with
+[copit](https://github.com/huynguyengl99/copit). Pronounced "chan-X kit".</small>

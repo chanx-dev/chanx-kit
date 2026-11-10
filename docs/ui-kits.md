@@ -1,4 +1,8 @@
-# UI kits
+---
+description: "Install, compose and style the React UI kits, which bind to a contract rather than one server."
+---
+
+# Use and style the UI kits
 
 A UI kit is the browser half of a kit: a framework-free store, React components on top,
 and one CSS file. Like server kits, it is copied into your project and yours to edit.
@@ -7,29 +11,29 @@ A UI kit binds to a **contract** (the messages on a topic), not to one server ki
 transcriber UI works with any server kit that speaks `transcriber@1`: Deepgram,
 ElevenLabs, OpenAI or the fake one. Each kit page lists what it works with.
 
-The server does not have to be Python. The [Go](go/index.md) and [Node](js/index.md)
-ports of notification, presence, room chat and AG-UI speak the same contracts, checked in CI,
-so their UI kits work against them unchanged.
+The server can be Node, Python or Go: the kits that carry a contract speak it on every
+server, checked in CI, so a UI kit works against any of them. The
+[catalog](kits/index.md#catalog) shows each kit's servers.
 
 ## Install
 
-UI kits live in a second registry in the same repository. Add it once, next to the
-server one, pointing at your web app's source folder:
+UI kits live in their own registry in the same repository. Add it once, pointing at
+your web app's source folder; copit sees React in `package.json` and picks the React
+variant:
 
 ```bash
-uvx copit registry add chanx-kit-ui github:chanx-dev/chanx-kit@v0.4.0 \
-  --index ui/copit-registry.json --to web/src/chanx-kit
+copit registry add chanx-kit-ui github:chanx-dev/chanx-kit@v0.5.0 --to web/src/chanx-kit
 ```
 
-copit 0.9 sees React in `package.json` and selects the `react` variant; on older copit
-add `--variant react`. From copit 0.10 the `--index` can go: the root index lists every
-registry in the repository, and the name `chanx-kit-ui` finds it. Then install kits, usually alongside their server kit:
+Then add a UI kit, usually with its server kit in the same command:
 
 ```bash
-uvx copit add @chanx-kit/notification @chanx-kit-ui/notification
+copit add @chanx-kit-js/notification @chanx-kit-ui/notification
 ```
 
-[Kits by feature](kits/index.md#by-feature) has the command for each feature.
+The [catalog](kits/index.md#catalog) pairs each server kit with its UI kit. New to copit?
+[Add kits to your app](add-to-your-app.md#1-set-up-the-registries) sets up both
+registries.
 
 `@chanx-js/client` is installed for you. Kits import each other relatively, so they
 work wherever `--to` puts them.

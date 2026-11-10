@@ -1,3 +1,7 @@
+---
+description: "Guide: live captions, text to speech and a voice agent you can interrupt, with swappable providers."
+---
+
 # Add voice
 
 Speech in and speech out over your chanx websocket: microphone audio becomes live
@@ -13,8 +17,8 @@ The pieces:
 | [`transcriber`](ui/transcriber.md), [`player`](ui/player.md) | browser | microphone and captions, playback |
 | [`voice-agent`](kits/voice-agent.md) (both sides) | both | an AG-UI agent you talk to |
 
-This page assumes both registries are set up ([Getting started](getting-started.md),
-[UI kits](ui-kits.md)). The [starter template](getting-started.md#start-a-new-project)
+Voice runs on Python servers today. This page assumes both registries are set up
+([add kits to your app](add-to-your-app.md)); the [FastAPI template](start-a-project.md)
 has them already.
 
 ## 1. Try it with no account
@@ -23,7 +27,7 @@ has them already.
 per word, so the whole path works before you sign up anywhere.
 
 ```bash
-uvx copit add @chanx-kit/fake-voice @chanx-kit-ui/transcriber @chanx-kit-ui/player
+copit add @chanx-kit/fake-voice @chanx-kit-ui/transcriber @chanx-kit-ui/player
 ```
 
 Mount the topics on a consumer:
@@ -93,7 +97,7 @@ user gesture.
 Install the provider and change the two base classes. The browser code does not change.
 
 ```bash
-uvx copit add @chanx-kit/deepgram
+copit add @chanx-kit/deepgram
 ```
 
 ```python
@@ -121,8 +125,8 @@ leaves out the audio kit only the other part needs. It applies to the kits that 
 that part, so the UI kit can come in the same command:
 
 ```bash
-uvx copit add @chanx-kit/deepgram @chanx-kit-ui/transcriber --only stt   # captions
-uvx copit add @chanx-kit/elevenlabs @chanx-kit-ui/player --only tts      # ElevenLabs speaks
+copit add @chanx-kit/deepgram @chanx-kit-ui/transcriber --only stt   # captions
+copit add @chanx-kit/elevenlabs @chanx-kit-ui/player --only tts      # ElevenLabs speaks
 ```
 
 Two providers each with their own part take two commands, as above. Mixing registries
@@ -136,7 +140,7 @@ pauses, the reply is spoken sentence by sentence while it streams, and speaking 
 it interrupts.
 
 ```bash
-uvx copit add @chanx-kit/voice-agent @chanx-kit-ui/voice-agent
+copit add @chanx-kit/voice-agent @chanx-kit-ui/voice-agent
 ```
 
 ```python

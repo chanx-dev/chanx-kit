@@ -1,13 +1,15 @@
 site_name: chanx-kit
-site_description: A collection of composable, copy-in WebSocket kits for chanx.
+site_description: Realtime features you copy into your app. Notifications, chat, presence, AI agent streaming and voice, for Node, Python and Go servers, with React UI.
 site_url: https://kit.chanx.dev/
 repo_url: https://github.com/chanx-dev/chanx-kit
 repo_name: chanx-dev/chanx-kit
 edit_uri: edit/main/
 copyright: MIT licensed
-# The brand guide sits next to the assets for people browsing the repo; it is not a page.
+# Build inputs and the brand guide sit in docs/ for people browsing the repo; not pages.
 exclude_docs: |
   assets/brand/README.md
+  *.py
+  recipes.yaml
 
 theme:
   name: material
@@ -18,12 +20,15 @@ theme:
     repo: fontawesome/brands/github
   features:
     - navigation.instant
+    - navigation.tabs
     - navigation.tracking
     - navigation.sections
     - navigation.top
+    - navigation.footer
     - navigation.indexes
     - toc.follow
     - content.code.copy
+    - content.tabs.link
     - content.code.annotate
     - content.action.edit
     - search.suggest
@@ -58,6 +63,21 @@ plugins:
         - docs/gen_pages.py
   - literate-nav:
       nav_file: SUMMARY.md
+  # The Go and Node kit pages became tabs on each kit's page.
+  - redirects:
+      redirect_maps:
+        go/index.md: kits/index.md
+        js/index.md: kits/index.md
+        go/ag-ui.md: kits/ag-ui.md
+        go/notification.md: kits/notification.md
+        go/presence.md: kits/presence.md
+        go/redis-presence-store.md: kits/redis-presence-store.md
+        go/room-chat.md: kits/room-chat.md
+        js/ag-ui.md: kits/ag-ui.md
+        js/notification.md: kits/notification.md
+        js/presence.md: kits/presence.md
+        js/redis-presence-store.md: kits/redis-presence-store.md
+        js/room-chat.md: kits/room-chat.md
 
 markdown_extensions:
   - admonition
@@ -75,7 +95,11 @@ markdown_extensions:
       anchor_linenums: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
 
@@ -95,3 +119,7 @@ watch:
   - go
   - js
   - copit-registry.json
+
+
+hooks:
+  - docs/hooks.py

@@ -1,4 +1,4 @@
-// Filter the kit catalog by text and by Side / Area / Role chips built from its columns.
+// Filter the kit catalog by text and by Servers / Area / Kind chips built from its columns.
 function setupKitFilter() {
   const host = document.querySelector('.kit-filter');
   if (!host || host.dataset.ready) return;
@@ -20,7 +20,7 @@ function setupKitFilter() {
   search.setAttribute('aria-label', 'Filter kits');
   host.append(search);
 
-  for (const name of ['Side', 'Area', 'Role']) {
+  for (const name of ['Servers', 'Area', 'Kind']) {
     const column = headers.indexOf(name);
     if (column < 0) continue;
     const order = (host.dataset[name.toLowerCase()] ?? '').split(',');

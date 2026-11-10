@@ -32,3 +32,101 @@
   height: 3.6rem;
   width: auto;
 }
+
+/* A quiet header: the page's own background, a hairline below, the wordmark that fits it. */
+.md-header,
+.md-tabs {
+  background-color: var(--md-default-bg-color);
+  color: var(--md-default-fg-color--light);
+}
+.md-header {
+  box-shadow: none;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+.md-header--shadow {
+  box-shadow: 0 0 0.4rem rgb(0 0 0 / 8%);
+}
+.md-tabs {
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+.md-tabs__link {
+  opacity: 1;
+  color: var(--md-default-fg-color--light);
+}
+.md-tabs__item--active .md-tabs__link,
+.md-tabs__link:hover {
+  color: var(--md-accent-fg-color);
+}
+.md-search__form,
+.md-search__form:hover {
+  background-color: var(--md-default-fg-color--lightest);
+}
+.md-search__input,
+.md-search__input::placeholder,
+.md-search__icon {
+  color: var(--md-default-fg-color--light);
+}
+.md-header .md-logo img.logo-for-dark,
+.md-nav__title .md-logo img.logo-for-dark,
+[data-md-color-scheme="slate"] .md-header .md-logo img.logo-for-light,
+[data-md-color-scheme="slate"] .md-nav__title .md-logo img.logo-for-light {
+  display: none;
+}
+[data-md-color-scheme="slate"] .md-header .md-logo img.logo-for-dark,
+[data-md-color-scheme="slate"] .md-nav__title .md-logo img.logo-for-dark {
+  display: block;
+}
+
+/* Small screens: keep the wordmark beside the menu button, which the theme would hide. */
+@media screen and (max-width: 76.2344em) {
+  .md-header__button.md-logo {
+    display: block;
+    order: 1;
+    margin-left: 0;
+  }
+  .md-header__button[for="__drawer"] {
+    order: 0;
+  }
+  .md-header__title {
+    order: 2;
+  }
+  .md-header__option,
+  .md-header__button[for="__search"],
+  .md-search,
+  .md-header__source {
+    order: 3;
+  }
+  .md-header__button.md-logo img {
+    height: 1.4rem;
+  }
+}
+
+/* The menu drawer gets the same quiet top: the wordmark alone, then the repository. */
+.md-nav--primary > .md-nav__title[for="__drawer"] {
+  background-color: var(--md-default-bg-color);
+  color: transparent;
+  font-size: 0;
+  height: 3.2rem;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+.md-nav--primary > .md-nav__title[for="__drawer"] .md-logo img {
+  height: 1.6rem;
+  width: auto;
+}
+@media screen and (max-width: 76.2344em) {
+  .md-nav--primary .md-nav__source {
+    background-color: var(--md-default-fg-color--lightest);
+    color: var(--md-default-fg-color);
+  }
+}
+
+/* On dark pages the navy outline button disappears; use the accent instead. */
+[data-md-color-scheme="slate"] .md-typeset .md-button:not(.md-button--primary) {
+  color: var(--md-accent-fg-color);
+  border-color: var(--md-accent-fg-color);
+}
+[data-md-color-scheme="slate"] .md-typeset .md-button--primary {
+  background-color: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}

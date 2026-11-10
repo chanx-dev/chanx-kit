@@ -1,217 +1,242 @@
-# Getting started
+---
+description: "Tutorial: a live notification inbox on Node, Python or Go, then a second kit added with one command."
+---
 
-## Start a new project
+# Build a live notification inbox
 
-One command creates a FastAPI backend and a React client with the notification kit
-already wired end to end, the client typed from the server's AsyncAPI schema:
+In about fifteen minutes you will have a web page that shows a notification the moment
+your server sends it, in every open tab, and a live list of who is online, added with one
+command.
 
-```bash
-uvx copit create gh:chanx-dev/chanx-kit@main/templates/fastapi-react my-app
-cd my-app
-```
+Pick your server once; every step below follows it.
 
-Then run it:
+**You need** Node 22 or newer, plus your server's toolchain:
 
-```bash
-uv sync
-npm --prefix web install
+=== "Node"
 
-uv run uvicorn app.main:app --reload     # API + WebSocket on :8000
-npm --prefix web run dev                 # UI on http://localhost:5173
-```
+    Nothing else.
 
-The project comes with its own `copit.toml`, so [adding a kit](#add-a-kit) works right
-away. Its README covers the rest: sending from another process, and where things live.
+=== "Python"
 
-No copit? `npx tiged chanx-dev/chanx-kit/templates/fastapi-react my-app` copies the
-same folder.
-
-The same app, with the same React client, exists for Go and Node servers. Swap the
-template name:
-
-| Server | Templates |
-|---|---|
-| Python | `fastapi-react` |
-| Go ([chanx-go](https://go.chanx.dev/)) | `go-nethttp-react`, `go-chi-react`, `go-gin-react`, `go-echo-react`, `go-fiber-react` |
-| Node ([chanx-js](https://js.chanx.dev/)) | `express-react`, `fastify-react`, `hono-react` |
-
-Each one's README has its run commands. The rest of this page adds kits to a project you
-already have; [Go and Node](#go-and-node) covers what differs there.
-
-## Install chanx
-
-Nothing is installed from this registry: kits are copied in. The only package they
-need is chanx itself, with the integration you use:
-
-=== "FastAPI"
-
-    ```bash
-    pip install "chanx[fast_channels]"
-    ```
-
-=== "Django"
-
-    ```bash
-    pip install "chanx[channels]"
-    ```
-
-## Add a kit
-
-Kits are copied with [copit](https://github.com/huynguyengl99/copit). copit has no
-built-in list of registries, so you tell it about this one once and it remembers in
-`copit.toml`:
-
-```bash
-uvx copit init
-uvx copit registry add chanx-kit github:chanx-dev/chanx-kit@v0.4.0 --to app/ws_kits
-```
-
-That records where the registry lives, where kits should land, and pins the version:
-
-```toml
-[registries.chanx-kit]
-source = "github:chanx-dev/chanx-kit@v0.4.0"
-target = "app/ws_kits"
-```
-
-After that, install by name:
-
-```bash
-uvx copit add @chanx-kit/notification
-```
-
-This drops the kit's source into your project (messages, topics and any store helpers),
-installs any Python packages it declares, and pulls in any kit it requires.
-
-!!! tip "Useful flags"
-    `--dry-run` shows the plan without writing. `-y` skips the confirmation.
-    `--with tests` also copies the kit's tests, which is worth it if you plan to modify
-    it. `--variant django` or `--variant fastapi` selects framework-specific files
-    (copit 0.9 detects it from `pyproject.toml`). `--only <part>` installs one part of a
-    kit that has several, such as a provider's `stt`.
-
-Later, to pick up upstream fixes:
-
-```bash
-uvx copit update app/ws_kits/notification            # same pinned version
-uvx copit update app/ws_kits/notification --ref <newer tag>
-```
-
-Files you have edited are preserved if you list them in `excludes` in `copit.toml`.
-
-## Mount it on a consumer
-
-A kit is a **topic**: a pattern clients address, with its own handlers, authorization
-and group. List it on a consumer:
-
-```python
-class AppConsumer(AsyncJsonWebsocketConsumer[NotificationMessage]):
-    channel_layer_alias = "default"
-    topics = [UserNotificationTopic]
-```
-
-Add the kit's messages to the consumer's event union so it can deliver them. List as
-many kits as you need. They are independent, so this one consumer serves chat history
-*and* a live roster, and either would work without the other:
-
-```python
-class RoomConsumer(
-    AsyncJsonWebsocketConsumer[
-        ChatMessage | PresenceJoinMessage | PresenceLeaveMessage
-    ],
-):
-    channel_layer_alias = "default"
-    topics = [RoomChatTopic, PresenceTopic]
-```
-
-Clients then address a topic per frame, and subscribe to the ones they want:
-
-```json
-{"version": 1, "topic": "chat:general", "ref": "1", "action": "subscribe"}
-```
-
-## Broadcast from outside a connection
-
-A topic reaches the channel layer itself, so a signal or worker can push to connected
-clients without importing a consumer:
-
-```python
-await UserNotificationTopic.notify_user(
-    user.id, NotificationPayload(title="Build finished")
-)
-```
-
-!!! warning "Broadcasting across processes needs a shared channel layer"
-    An in-memory layer lives inside one process, so a worker publishing into its own
-    layer will never reach the browser. Use Redis for anything multi-process.
-
-## Customise it
-
-Everything is an ordinary method, so subclass and override:
-
-```python
-class TenantNotificationTopic(UserNotificationTopic):
-    def current_user_id(self) -> str | None:
-        tenant = dict(self.scope["headers"]).get(b"x-tenant-id")
-        return tenant.decode() if tenant else None
-
-    async def on_notifications_acked(self, ids: list[str]) -> None:
-        await Notification.objects.filter(id__in=ids).aupdate(read=True)
-```
-
-Each kit's page lists its hooks and their defaults.
-
-## Go and Node
-
-The kits that carry a contract (notification, presence, room chat, AG-UI) are ported to
-[chanx-go](https://go.chanx.dev/) and [chanx-js](https://js.chanx.dev/), with the same
-messages and topic names, so the UI kits work unchanged and a Python, Go and Node server
-on one Redis reach each other's clients. Each language is its own registry in this
-repository:
+    [uv](https://docs.astral.sh/uv/getting-started/installation/).
 
 === "Go"
 
-    ```bash
-    uvx copit registry add chanx-kit-go github:chanx-dev/chanx-kit@<tag> \
-      --index go/copit-registry.json --to internal/wskits
-    uvx copit add @chanx-kit-go/notification
-    go mod tidy
-    ```
+    Go 1.25 or newer.
 
-    ```go
-    func (AppConsumer) Topics() []chanx.TopicHandler {
-    	return []chanx.TopicHandler{notification.UserNotificationTopic{}}
-    }
+## 1. Install copit
 
-    notification.NotifyUser(ctx, engine.Publisher(), user.ID,
-    	notification.NotificationPayload{Title: "Build finished"})
-    ```
+--8<-- "docs/.snippets/install-copit.md"
+
+You use it twice here: to create the app now, and to add a second feature later.
+
+## 2. Create the starter app
 
 === "Node"
 
     ```bash
-    uvx copit registry add chanx-kit-js github:chanx-dev/chanx-kit@<tag> \
-      --index js/copit-registry.json --to src/ws-kits
-    uvx copit add @chanx-kit-js/notification
+    copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/express-react inbox
+    cd inbox
     ```
+
+=== "Python"
+
+    ```bash
+    copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/fastapi-react inbox
+    cd inbox
+    ```
+
+=== "Go"
+
+    ```bash
+    copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/go-nethttp-react inbox
+    cd inbox
+    ```
+
+You now have a server, a React app in `web/`, and the notification kit already copied
+into both.
+
+## 3. Start the server
+
+=== "Node"
+
+    ```bash
+    npm install
+    npm --prefix web install
+    npm run dev
+    ```
+
+=== "Python"
+
+    ```bash
+    uv sync
+    npm --prefix web install
+    uv run uvicorn app.main:app --reload
+    ```
+
+=== "Go"
+
+    ```bash
+    npm --prefix web install
+    go run .
+    ```
+
+The server listens on port 8000. Leave it running.
+
+## 4. Open the inbox
+
+In a second terminal:
+
+```bash
+npm --prefix web run dev
+```
+
+Open <http://localhost:5173>. You see **chanx app** with an empty notification feed,
+its status reading **open**: the page holds a live connection to your server.
+
+## 5. Send from the page
+
+Open the same address in a second browser tab. In either tab, type a title and press
+**Send**.
+
+The notification appears in **both** tabs at once.
+
+## 6. Send from your terminal
+
+Nothing on the sending side needs a WebSocket. Any process that can reach your server
+can push:
+
+```bash
+curl -X POST http://localhost:8000/api/notify \
+  -H 'Content-Type: application/json' -d '{"title": "Build finished"}'
+```
+
+"Build finished" appears in both tabs.
+
+## 7. Send to one person
+
+Each tab connects as the name in **Connect as**, `chris` by default. Change one tab to
+`ann`, then:
+
+```bash
+curl -X POST http://localhost:8000/api/notify \
+  -H 'Content-Type: application/json' -d '{"title": "Just for Ann", "user": "ann"}'
+```
+
+Only Ann's tab shows it. The server refused to let Chris's tab subscribe to Ann's
+notifications in the first place.
+
+## 8. Add a second kit
+
+Every feature is one copit command. Add presence, the server half and the browser half
+together. The starter already knows where kits come from (its `copit.toml`), so there is
+nothing to set up first:
+
+=== "Node"
+
+    ```bash
+    copit add @chanx-kit-js/presence @chanx-kit-ui/presence -y
+    ```
+
+=== "Python"
+
+    ```bash
+    copit add @chanx-kit/presence @chanx-kit-ui/presence -y
+    ```
+
+=== "Go"
+
+    ```bash
+    copit add @chanx-kit-go/presence @chanx-kit-ui/presence -y
+    ```
+
+Two new folders appear: the server kit next to `notification`, and
+`web/src/chanx-kit/presence`.
+
+## 9. Mount it
+
+List the presence topic next to the notification ones:
+
+=== "Node"
+
+    In `src/app.ts`:
 
     ```ts
-    const app = consumer('/ws', { name: 'app', authenticate, topics: [UserNotificationTopic] });
+    import { PresenceTopic } from './ws-kits/presence';
 
-    await notifyUser(chanx, user.id, { title: 'Build finished' });
+    // in consumer('/ws/notifications', { ... })
+    topics: [UserNotificationTopic, BroadcastNotificationTopic, PresenceTopic],
     ```
 
-Go kits need copit 0.10 or newer: it runs `go get` for their modules and rewrites the
-imports between kits (the Redis presence store imports presence) to your module path.
-An older copit copies the files but does neither. From 0.10, `--index` can also be left
-out: the registry name finds it.
+=== "Python"
 
-Hooks are options rather than subclasses there: a struct field in Go, a factory option in
-Node. [Go kits](go/index.md) and [Node kits](js/index.md) list them.
+    In `app/consumers.py`:
+
+    ```python
+    from app.ws_kits.presence import PresenceTopic
+
+    # in NotificationConsumer
+    topics: ClassVar[list[type[Topic[Any]]]] = [
+        UserNotificationTopic,
+        BroadcastNotificationTopic,
+        PresenceTopic,
+    ]
+    ```
+
+=== "Go"
+
+    In `internal/app/app.go`, then restart `go run .`:
+
+    ```go
+    import "app/internal/wskits/presence"
+
+    // in NotificationConsumer.Topics
+    return []chanx.TopicHandler{
+    	notification.UserNotificationTopic{},
+    	notification.BroadcastNotificationTopic{},
+    	presence.PresenceTopic{},
+    }
+    ```
+
+Then regenerate the typed client from the server's schema:
+
+```bash
+npm --prefix web run gen
+```
+
+`web/src/generated/channels.ts` now has a `presenceTopic`.
+
+## 10. Show who is here
+
+In `web/src/App.tsx`, next to `useNotifications`:
+
+```tsx
+import { PresenceRoster, usePresence } from '@/chanx-kit/presence/react';
+import '@/chanx-kit/presence/presence.css';
+
+// inside App(), with the same options, so it shares the socket:
+const { members } = usePresence(
+  notifications,
+  notifications.topics.presenceTopic.with({ scope: 'lobby' }),
+  { queryParams: { as: who } },
+);
+
+// in the JSX, under the header:
+<PresenceRoster members={members} self={who} />
+```
+
+Both tabs now list **chris** and **ann**. Close one, and the other drops it.
+
+## What you built
+
+A server that pushes to the right browser tabs from anywhere, a React inbox that
+stays typed to the server's own schema, a live roster added with one command, and the
+code for all of it in your project, yours to edit.
 
 ## Next
 
-- [UI kits](ui-kits.md): the browser half, React first
-- [Add voice](voice.md): captions, spoken replies and a voice agent
-- [Browse the kits](kits/index.md), or the [Go](go/index.md) and [Node](js/index.md) ones
-- [Authoring a kit](authoring-a-kit.md): what a topic is made of, and why
+- **Make it your own project:** [start a project](start-a-project.md) on your framework,
+  or [set up an existing app](set-up-your-app.md).
+- **Build another feature:** [a chat room with who's online](chat-room.md) or
+  [an AI agent streaming to the page](agent-streaming.md).
+- **Understand it:** [how it works](how-it-works.md).

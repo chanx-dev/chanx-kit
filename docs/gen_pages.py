@@ -5,6 +5,7 @@ format. Run by ``mkdocs-gen-files``, not standalone.
 
 from __future__ import annotations
 
+import html
 import importlib
 import inspect
 import json
@@ -16,6 +17,7 @@ from typing import Any
 import mkdocs_gen_files
 import yaml
 from chanx.messages.base import BaseMessage
+from markdown.extensions.toc import slugify
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "python"))
@@ -171,24 +173,6 @@ def link_list(names: list[str], prefix: str) -> str:
     return ", ".join(f"[`{name}`]({prefix}{name}.md)" for name in names)
 
 
-def contract_facts(component: dict[str, Any], *, ui: bool) -> list[str]:
-    """Each contract, and the kits on the other side of it."""
-    rows = []
-    for contract in contracts_of(component):
-        rows.append(f"| **Contract** | `{contract}` |")
-        other, label, prefix = (
-            (SERVERS_OF, "Works with", "../kits/")
-            if ui
-            else (UIS_OF, "UI kits", "../ui/")
-        )
-        if other.get(contract):
-            rows.append(f"| **{label}** | {link_list(other[contract], prefix)} |")
-        providers = [p for p in SERVERS_OF.get(contract, []) if p != component["name"]]
-        if not ui and manifest(component).get("defines") == contract and providers:
-            rows.append(f"| **Providers** | {link_list(providers, '')} |")
-    return rows
-
-
 nav_lines: list[str] = []
 
 
@@ -272,89 +256,109 @@ def kit_messages(package: str) -> dict[str, tuple[str, dict[str, Any]]]:
     return dict(sorted(found.items()))
 
 
-def port_links(name: str) -> list[str]:
-    """The Go and JS ports of a Python kit."""
-    ports = [
-        f"[{PORT_LANGUAGES[folder][0]}](../{folder}/{name}.md)"
-        for folder, components in PORTS.items()
-        if name in components
-    ]
-    return [f"| **Also on** | {', '.join(ports)} |"] if ports else []
+# Server tabs, in this order on every page; linked, so one choice applies site-wide.
+SERVERS = (("js", "Node"), ("python", "Python"), ("go", "Go"))
+FENCE = re.compile(r"^\s*(```|~~~)")
+HEADING = re.compile(r"^(#{2,6})\s+(.*?)\s*$")
+
+
+def servers_of(name: str) -> list[str]:
+    """Labels of the servers a kit exists for, in tab order."""
+    have = {"python", *(f for f, c in PORTS.items() if name in c)}
+    return [label for folder, label in SERVERS if folder in have]
+
+
+def tab_body(readme: str, id_prefix: str) -> str:
+    """A README as tab content: no title or intro, headings kept out of the TOC."""
+    lines = re.sub(r"\A#\s+.*\n+", "", readme, count=1).splitlines()
+    first_fence = next((i for i, line in enumerate(lines) if FENCE.match(line)), 0)
+    lines = lines[first_fence:]
+    out: list[str] = []
+    in_code = False
+    for line in lines:
+        if FENCE.match(line):
+            in_code = not in_code
+        heading = None if in_code else HEADING.match(line)
+        if heading:
+            level = len(heading[1]) + 1
+            title = html.escape(heading[2])
+            title = re.sub(r"`([^`]+)`", r"<code>\1</code>", title)
+            anchor = id_prefix + slugify(heading[2].replace("`", ""), "-")
+            out.append(f'<h{level} class="kit-tab-h" id="{anchor}">{title}</h{level}>')
+        else:
+            out.append(line)
+    return "\n".join(f"    {line}" if line else "" for line in out)
+
+
+def missing_tab(label: str, component: dict[str, Any]) -> str:
+    meta = manifest(component)
+    if meta.get("only_variants"):
+        why = f"It is built on {', '.join(meta['only_variants'])}, so it stays Python."
+    elif meta["role"] == "provider":
+        why = f"{component['title']} is a Python provider for now; providers come to a server when asked for."
+    elif meta["role"] in {"foundation", "tooling"} or not contracts_of(component):
+        why = "Python only for now: it supports Python kits that have no port yet."
+    else:
+        why = "Not ported yet."
+    return (
+        f'    !!! note "Not available for {label}"\n'
+        f"        {why} See which kits each server has in the "
+        "[catalog](index.md#catalog)."
+    )
+
+
+def availability(name: str, component: dict[str, Any]) -> str:
+    """Badges for the servers a kit runs on, then its UI kits and contracts."""
+    have = set(servers_of(name))
+    badges = " ".join(
+        f'<span class="kit-badge" data-on="{str(label in have).lower()}">{label}</span>'
+        for _, label in SERVERS
+    )
+    contracts = contracts_of(component)
+    uis = sorted({u for c in contracts for u in UIS_OF.get(c, [])})
+    facts = []
+    if uis:
+        facts.append("UI kit: " + link_list(uis, "../ui/"))
+    if contracts:
+        facts.append("Contract: " + ", ".join(f"`{c}`" for c in contracts))
+    return badges + (" · " + " · ".join(facts) if facts else "")
 
 
 def kit_page(name: str, component: dict[str, Any]) -> str:
-    directory = REPO_ROOT / component["path"]
-    readme = (directory / "README.md").read_text()
-
-    # The metadata header below replaces the README's own H1.
-    body = re.sub(r"\A#\s+.*\n+", "", readme, count=1)
-
-    tier = component["tier"]
-    requires = component.get("requires") or []
-    dependencies = component.get("dependencies") or []
-    only_variants = component.get("only_variants") or []
-
+    folders = {
+        "python": component,
+        **{f: c[name] for f, c in PORTS.items() if name in c},
+    }
     header = [
         f"# {component['title']}",
         "",
-        f'!!! info "{tier} · v{component["version"]}"',
-        f"    {component['description']}",
+        component["description"],
+        "",
+        availability(name, component),
         "",
         *foundation_note(name, component, SERVER_REQUIRED_BY),
-    ]
-
-    variant_flags = " ".join(f"--variant {variant}" for variant in only_variants)
-    install = f"copit add @chanx-kit/{name}"
-    if variant_flags:
-        install = f"{install} {variant_flags}"
-
-    facts = ["| | |", "|---|---|", f"| **Install** | `{install}` |"]
-    if only_variants:
-        facts.append(
-            "| **Only on** | "
-            + ", ".join(f"`{variant}`" for variant in only_variants)
-            + " |"
-        )
-    facts.append(f"| **Import from** | `{Path(component['path']).name}` |")
-    if requires:
-        links = ", ".join(f"[`{r}`]({r}.md)" for r in requires)
-        facts.append(f"| **Requires kits** | {links} |")
-    if parts := component.get("parts"):
-        listed = ", ".join(
-            f"`{part}` ({', '.join(f for f in spec['include'] if '/' not in f)})"
-            for part, spec in parts.items()
-        )
-        facts.append(
-            f"| **Parts** | {listed}: all by default, "
-            f"or `copit add @chanx-kit/{name} --only <part>` |"
-        )
-    facts += contract_facts(component, ui=False)
-    facts += port_links(name)
-    if dependencies:
-        facts.append(
-            "| **Python packages** | "
-            + ", ".join(f"`{d}`" for d in dependencies)
-            + " |"
-        )
-    if component.get("tags"):
-        facts.append(
-            "| **Keywords** | " + ", ".join(f"`{t}`" for t in component["tags"]) + " |"
-        )
-    facts.append(
-        f"| **Source** | [{component['path']}]({REPO_URL}/tree/main/{component['path']}) |"
-    )
-
-    sections = [
-        page_tags(component, ui=False) + "\n".join(header),
-        "\n".join(facts),
+        "<small>First time? Install copit and set up the registries once:"
+        " [add kits to your app](../add-to-your-app.md#1-set-up-the-registries).</small>",
         "",
-        rewrite_links(body),
     ]
+    tabs: list[str] = []
+    for folder, label in SERVERS:
+        tabs.append(f'=== "{label}"\n')
+        if folder in folders:
+            readme = (REPO_ROOT / folders[folder]["path"] / "README.md").read_text()
+            prefix = "" if folder == "python" else f"{folder}-"
+            tabs.append(rewrite_links(tab_body(readme, prefix)) + "\n")
+        else:
+            tabs.append(missing_tab(label, component) + "\n")
+
+    sections = [page_tags(component, ui=False) + "\n".join(header), *tabs]
 
     messages = kit_messages(Path(component["path"]).name)
     if messages:
-        sections.append("\n## Message reference\n")
-        sections.append("_Generated from the kit's message classes._\n")
+        sections.append("\n## Messages\n")
+        sections.append(
+            "_The same on every server: generated from the kit's schema._\n"
+        )
         for action, (class_name, schema) in messages.items():
             sections.append(f"### `{action}`\n")
             sections.append(f"`{class_name}`\n")
@@ -362,33 +366,64 @@ def kit_page(name: str, component: dict[str, Any]) -> str:
             if table:
                 sections.append(table)
 
+    rows = ["| Server | Install | Version | Source |", "|---|---|---|---|"]
+    for folder, label in SERVERS:
+        if folder in folders:
+            c = folders[folder]
+            registry = "chanx-kit" if folder == "python" else PORT_LANGUAGES[folder][1]
+            rows.append(
+                f"| {label} | `copit add @{registry}/{name}` | {c['version']} "
+                f"| [{c['path']}]({REPO_URL}/tree/main/{c['path']}) |"
+            )
+    sections.append('\n??? info "Install commands, versions and source"\n')
+    sections.append("\n".join(f"    {row}" for row in rows) + "\n")
     return "\n".join(sections)
 
 
 # --- kit pages ------------------------------------------------------------------
+REGISTRY_OF = {"Node": "chanx-kit-js", "Python": "chanx-kit", "Go": "chanx-kit-go"}
+
+
+def recipe_command(add: str, server: str) -> str | None:
+    """A recipe's command for one server, or None when a server kit in it has no port."""
+    kits = re.findall(r"@chanx-kit/([\w-]+)", add)
+    if not all(server in servers_of(kit) for kit in kits):
+        return None
+    return add.replace("@chanx-kit/", f"@{REGISTRY_OF[server]}/")
+
+
 def recipe_rows() -> list[str]:
-    """The feature table, from docs/recipes.yaml."""
-    rows = ["| Feature | Install |", "|---|---|"]
-    for recipe in yaml.safe_load((REPO_ROOT / "docs" / "recipes.yaml").read_text()):
-        install = f"`copit add {recipe['add']}`"
-        if providers := recipe.get("providers"):
-            install += "<br>Other providers: " + ", ".join(f"`{p}`" for p in providers)
-        rows.append(f"| **{recipe['title']}**<br>{recipe['what']} | {install} |")
-    return rows
+    """The feature table, from docs/recipes.yaml, as one tab per server."""
+    recipes = yaml.safe_load((REPO_ROOT / "docs" / "recipes.yaml").read_text())
+    out: list[str] = ['<div class="recipes" markdown>', ""]
+    for _, server in SERVERS:
+        out += [f'=== "{server}"', "", "    | Feature | Install |", "    |---|---|"]
+        for recipe in recipes:
+            command = recipe_command(recipe["add"], server)
+            install = f"`copit add {command}`" if command else "Python only for now"
+            if command and (providers := recipe.get("providers")):
+                install += "<br>Other providers: " + ", ".join(
+                    f"`{p}`" for p in providers
+                )
+            out.append(f"    | **{recipe['title']}**<br>{recipe['what']} | {install} |")
+        out.append("")
+    return [*out, "</div>", ""]
 
 
-def catalog_row(name: str, component: dict[str, Any], *, ui: bool) -> str:
-    link = f"../ui/{name}.md" if ui else f"{name}.md"
+def catalog_row(name: str, component: dict[str, Any]) -> str:
     areas = ", ".join(AREAS[a] for a in areas_of(component))
     role = ROLES[manifest(component)["role"]]
-    side = "UI" if ui else "Server"
+    uis = sorted({u for c in contracts_of(component) for u in UIS_OF.get(c, [])})
+    ui = link_list(uis, "../ui/") if uis else ""
+    first = component["description"].split(". ")[0].rstrip(".") + "."
     return (
-        f"| [`{name}`]({link}) | {side} | {areas} | {role} "
-        f"| {component['description']} |"
+        f"| [`{name}`]({name}.md) | {', '.join(servers_of(name))} | {ui} "
+        f"| {areas} | {role} | {first} |"
     )
 
 
 index_rows = [
+    "---\nhide:\n  - toc\n---\n",
     "# Kits",
     "",
     "Each kit is copied into your project and owned by you. Install with"
@@ -401,17 +436,17 @@ index_rows = [
     "",
     "## Catalog",
     "",
-    "Every server and UI kit. Foundations are installed for you by the kits that need"
-    " them; [providers](../providers/index.md) plug a vendor into a contract.",
+    "Every server kit, and the servers it runs on. Kits that carry a contract reach every"
+    " server; stores follow their kit; integrations live where their ecosystem is."
+    " [UI kits](../ui/index.md) are listed on their own.",
     "",
-    '<div class="kit-filter" data-side="Server,UI"'
-    f' data-area="{",".join(AREAS.values())}" data-role="{",".join(ROLES.values())}">'
+    '<div class="kit-filter" data-servers="Node,Python,Go"'
+    f' data-area="{",".join(AREAS.values())}" data-kind="{",".join(ROLES.values())}">'
     "</div>",
     "",
-    "| Kit | Side | Area | Role | Description |",
-    "|---|---|---|---|---|",
-    *(catalog_row(n, COMPONENTS[n], ui=False) for n in sorted(COMPONENTS)),
-    *(catalog_row(n, UI_COMPONENTS[n], ui=True) for n in sorted(UI_COMPONENTS)),
+    "| Kit | Servers | UI kit | Area | Kind | What it does |",
+    "|---|---|---|---|---|---|",
+    *(catalog_row(n, COMPONENTS[n]) for n in sorted(COMPONENTS)),
 ]
 
 with mkdocs_gen_files.open("kits/index.md", "w") as handle:
@@ -425,92 +460,6 @@ for name in sorted(COMPONENTS):
     )
 nav_lines.append("* [Kits](kits/index.md)")
 nav_lines += nav_groups(COMPONENTS, "kits/")
-
-
-# --- Go and JS kits -------------------------------------------------------------
-def port_page(folder: str, name: str, component: dict[str, Any]) -> str:
-    label, registry, target, packages = PORT_LANGUAGES[folder]
-    readme = (REPO_ROOT / component["path"] / "README.md").read_text()
-    body = re.sub(r"\A#\s+.*\n+", "", readme, count=1)
-    meta = manifest(component)
-    facts = [
-        "| | |",
-        "|---|---|",
-        f"| **Install** | `copit add @{registry}/{name}` |",
-        f"| **Import from** | `{target}/{Path(component['path']).name}` |",
-        f"| **Python kit** | [`{name}`](../kits/{name}.md) |",
-    ]
-    for contract in meta.get("implements") or []:
-        facts.append(f"| **Contract** | `{contract}` |")
-        if UIS_OF.get(contract):
-            facts.append(f"| **UI kits** | {link_list(UIS_OF[contract], '../ui/')} |")
-    if requires := component.get("requires"):
-        facts.append(f"| **Requires kits** | {link_list(requires, '')} |")
-    facts.append(
-        f"| **{packages}** | "
-        + ", ".join(f"`{d}`" for d in component["dependencies"])
-        + " |"
-    )
-    facts.append(
-        f"| **Source** | [{component['path']}]({REPO_URL}/tree/main/{component['path']}) |"
-    )
-    header = [
-        f"# {component['title']} for {label}",
-        "",
-        f'!!! info "{label} · v{component["version"]}"',
-        f"    {component['description']}",
-        "",
-    ]
-    tags = (
-        "---\ntags:\n"
-        + "".join(
-            f"  - {t}\n"
-            for t in [
-                *(AREAS[a] for a in areas_of(component)),
-                f"{label} kit",
-                *contracts_of(component),
-            ]
-        )
-        + "---\n\n"
-    )
-    return "\n".join([tags + "\n".join(header), "\n".join(facts), "", body])
-
-
-for folder, components in PORTS.items():
-    label, registry, target, _ = PORT_LANGUAGES[folder]
-    port_index = [
-        f"# {label} kits",
-        "",
-        f"The Python kits ported to chanx-{folder}, speaking the same contracts, so the"
-        " [UI kits](../ui/index.md) work unchanged. Set the registry up once; copit"
-        " copies the files, and the server's packages come with the kit:",
-        "",
-        "```bash",
-        f"copit registry add {registry} github:chanx-dev/chanx-kit@<tag> \\",
-        f"  --index {folder}/copit-registry.json --to {target}",
-        f"copit add @{registry}/notification @chanx-kit-ui/notification",
-        "```",
-        "",
-        "| Kit | Contract | Description |",
-        "|---|---|---|",
-    ]
-    for name in sorted(components):
-        contract = ", ".join(f"`{c}`" for c in contracts_of(components[name]))
-        port_index.append(
-            f"| [`{name}`]({name}.md) | {contract} | {components[name]['description']} |"
-        )
-    with mkdocs_gen_files.open(f"{folder}/index.md", "w") as handle:
-        handle.write("\n".join(port_index) + "\n")
-    for name in sorted(components):
-        with mkdocs_gen_files.open(f"{folder}/{name}.md", "w") as handle:
-            handle.write(port_page(folder, name, components[name]))
-        mkdocs_gen_files.set_edit_path(
-            f"{folder}/{name}.md", f"{components[name]['path']}/README.md"
-        )
-    nav_lines.append(f"* [{label} kits]({folder}/index.md)")
-    nav_lines += [
-        f"    * [{components[n]['title']}]({folder}/{n}.md)" for n in sorted(components)
-    ]
 
 
 # --- providers ------------------------------------------------------------------
@@ -566,8 +515,8 @@ provider_rows += [
 ]
 with mkdocs_gen_files.open("providers/index.md", "w") as handle:
     handle.write("\n".join(provider_rows) + "\n")
-nav_lines.append("* [Providers](providers/index.md)")
-nav_lines += [f"    * [{COMPONENTS[n]['title']}](kits/{n}.md)" for n in PROVIDERS]
+nav_lines.append("    * [Providers](providers/index.md)")
+nav_lines += [f"        * [{COMPONENTS[n]['title']}](kits/{n}.md)" for n in PROVIDERS]
 
 
 # --- UI kit pages ---------------------------------------------------------------
@@ -575,43 +524,45 @@ def ui_page(name: str, component: dict[str, Any]) -> str:
     readme = (REPO_ROOT / component["path"] / "README.md").read_text()
     body = re.sub(r"\A#\s+.*\n+", "", readme, count=1)
 
-    facts = [
-        "| | |",
-        "|---|---|",
-        f"| **Install** | `copit add @chanx-kit-ui/{name}` |",
-        f"| **Or with shadcn** | `npx shadcn add {SHADCN_URL}/{name}.json` |",
-    ]
-    facts += contract_facts(component, ui=True)
+    facts = []
+    for contract in contracts_of(component):
+        facts.append(f"Contract: `{contract}`")
+        if SERVERS_OF.get(contract):
+            facts.append(f"Works with: {link_list(SERVERS_OF[contract], '../kits/')}")
     if component.get("requires"):
-        facts.append(
-            f"| **Requires UI kits** | {link_list(component['requires'], '')} |"
-        )
-    variants = ", ".join(f"`{variant}`" for variant in component.get("variants", {}))
-    if variants:
-        facts.append(f"| **Frameworks** | {variants} (the core is framework-free) |")
-    facts.append(
-        "| **npm packages** | "
-        + ", ".join(f"`{d}`" for d in component["dependencies"])
-        + " |"
-    )
-    facts.append(
-        f"| **Source** | [{component['path']}]({REPO_URL}/tree/main/{component['path']}) |"
-    )
+        facts.append(f"Brings: {link_list(component['requires'], '')}")
+    if variants := ", ".join(component.get("variants", {})):
+        facts.append(f"{variants.title()}, on a framework-free core")
 
+    # The README opens with the description and the copit command.
     header = [
         f"# {component['title']}",
         "",
-        f'!!! info "UI · v{component["version"]}"',
-        f"    {component['description']}",
+        " · ".join(facts),
         "",
         *foundation_note(name, component, UI_REQUIRED_BY),
+        "<small>First time? Set up the UI registry once:"
+        " [using UI kits](../ui-kits.md#install).</small>",
+        "",
+    ]
+    packages = ", ".join(f"`{d}`" for d in component["dependencies"])
+    details = [
+        '??? info "With shadcn, version, packages and source"',
+        "",
+        "    ```bash",
+        f"    npx shadcn add {SHADCN_URL}/{name}.json",
+        "    ```",
+        "",
+        f"    Version {component['version']}. npm packages: {packages}. Source:"
+        f" [{component['path']}]({REPO_URL}/tree/main/{component['path']}).",
+        "",
     ]
     return "\n".join(
         [
             page_tags(component, ui=True) + "\n".join(header),
-            "\n".join(facts),
-            "",
             rewrite_links(body),
+            "",
+            *details,
         ]
     )
 
@@ -622,15 +573,14 @@ ui_index = [
     "Copy-in UI that binds to a **contract**, the messages on a topic, rather than to"
     " one server kit, so it works with every server speaking that contract. Each has a"
     " framework-free core and React components; styling is one CSS file driven by"
-    " `--chanx-*` variables. Set the registry up once, choosing your framework:",
+    " `--chanx-*` variables. Set the registry up once:",
     "",
     "```bash",
-    "copit registry add chanx-kit-ui github:chanx-dev/chanx-kit@<tag> \\",
-    "  --index ui/copit-registry.json --to web/src/chanx-kit --variant react",
-    "copit add @chanx-kit/notification @chanx-kit-ui/notification",
+    "copit registry add chanx-kit-ui github:chanx-dev/chanx-kit@v0.5.0 --to web/src/chanx-kit",
     "```",
     "",
-    "[Kits by feature](../kits/index.md#by-feature) pairs each with its server kit.",
+    "[Using UI kits](../ui-kits.md) covers composing and styling them; the"
+    " [catalog](../kits/index.md#catalog) pairs each with its server kit.",
     "",
     "| UI kit | Contract | Description |",
     "|---|---|---|",
@@ -658,7 +608,6 @@ with mkdocs_gen_files.open("tags.md", "w") as handle:
     handle.write(
         "# Tags\n\nEvery kit page by area, role, side and contract.\n\n<!-- material/tags -->\n"
     )
-nav_lines.append("* [Tags](tags.md)")
 
 # --- contributing page ----------------------------------------------------------
 # Rendered from the repository's own CONTRIBUTING.md so the two cannot disagree. Its
@@ -687,10 +636,18 @@ with mkdocs_gen_files.open("SUMMARY.md", "w") as handle:
         "\n".join(
             [
                 "* [Home](index.md)",
-                "* [Getting started](getting-started.md)",
+                "* Get started",
+                "    * [Build a live inbox](getting-started.md)",
+                "    * [Start a project](start-a-project.md)",
+                "    * [Set up an existing app](set-up-your-app.md)",
+                "    * [Add kits to your app](add-to-your-app.md)",
+                "    * [How it works](how-it-works.md)",
                 "* Guides",
-                "    * [UI kits](ui-kits.md)",
+                "    * [Chat room with who's online](chat-room.md)",
+                "    * [Stream an AI agent](agent-streaming.md)",
                 "    * [Add voice](voice.md)",
+                "    * [Send across processes](multiple-processes.md)",
+                "    * [Use and style the UI kits](ui-kits.md)",
                 *nav_lines,
                 "* Contributing",
                 "    * [Checklist and workflow](contributing.md)",
@@ -701,3 +658,68 @@ with mkdocs_gen_files.open("SUMMARY.md", "w") as handle:
         )
         + "\n"
     )
+
+
+# --- llms.txt -------------------------------------------------------------------
+# An index for AI tools (llmstxt.org), from the pages' own titles and descriptions. It
+# links each page's Markdown copy, which docs/hooks.py writes next to the HTML.
+SITE = "https://kit.chanx.dev/"
+
+
+def page_entry(path: str) -> str:
+    source = (REPO_ROOT / "docs" / path).read_text()
+    title = re.search(r"^# (.+)$", source, re.M)
+    about = re.search(r'^description: "(.+)"$', source, re.M)
+    url = SITE + path
+    return f"- [{title[1] if title else path}]({url}): {about[1] if about else ''}"
+
+
+llms = [
+    "# chanx-kit",
+    "",
+    "> Realtime features you copy into your app: notifications, chat, presence, AI agent"
+    " streaming and voice, for Node, Python and Go servers, with React UI that works with"
+    " any of them. Kits are copied in with copit and owned by the project.",
+    "",
+    "## Get started",
+    *(
+        page_entry(p)
+        for p in (
+            "getting-started.md",
+            "start-a-project.md",
+            "set-up-your-app.md",
+            "add-to-your-app.md",
+            "how-it-works.md",
+        )
+    ),
+    "",
+    "## Guides",
+    *(
+        page_entry(p)
+        for p in (
+            "chat-room.md",
+            "agent-streaming.md",
+            "voice.md",
+            "multiple-processes.md",
+            "ui-kits.md",
+        )
+    ),
+    "",
+    "## Server kits",
+    *(
+        f"- [{c['title']}]({SITE}kits/{n}.md): {c['description']} Servers: {', '.join(servers_of(n))}."
+        for n, c in sorted(COMPONENTS.items())
+    ),
+    "",
+    "## UI kits",
+    *(
+        f"- [{c['title']}]({SITE}ui/{n}.md): {c['description']}"
+        for n, c in sorted(UI_COMPONENTS.items())
+    ),
+    "",
+    "## Optional",
+    f"- [Everything in one file]({SITE}llms-full.txt): every page above, in order.",
+    "",
+]
+with mkdocs_gen_files.open("llms.txt", "w") as handle:
+    handle.write("\n".join(llms))

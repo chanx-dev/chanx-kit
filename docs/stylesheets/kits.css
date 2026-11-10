@@ -53,3 +53,103 @@
   font-size: 0.7rem;
   color: var(--md-default-fg-color--light);
 }
+
+/* Which servers a kit runs on, above its tabs. */
+.kit-badge {
+  display: inline-block;
+  margin-right: 0.25rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: 1rem;
+  font-size: 0.7rem;
+  border: 1px solid var(--md-default-fg-color--lighter);
+}
+.kit-badge[data-on='true'] {
+  border-color: var(--md-accent-fg-color);
+  color: var(--md-accent-fg-color);
+}
+.kit-badge[data-on='false'] {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
+/* Headings inside a server tab: styled like headings, kept out of the page's TOC. */
+.kit-tab-h {
+  margin: 1.4em 0 0.6em;
+  font-weight: 700;
+}
+
+.hero-lead {
+  font-size: 1.15rem;
+  line-height: 1.5;
+  max-width: 42rem;
+}
+
+/* Phones: a calmer lead, the two calls to action as full-width, equal buttons. */
+@media screen and (max-width: 44.9844em) {
+  .md-typeset .hero-lead {
+    font-size: 0.95rem;
+  }
+  .md-typeset .hero-lead + p {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .md-typeset .hero-lead + p .md-button {
+    margin: 0;
+    text-align: center;
+  }
+  .md-typeset h1:has(.hero-wordmark) {
+    margin: 0.4rem 0 1rem;
+  }
+  .md-typeset h1:has(.hero-wordmark) .hero-wordmark {
+    height: 2.4rem;
+  }
+  /* Code inside tabs bleeds to the edges like the code outside them. */
+  .md-content__inner > .tabbed-set .tabbed-block > .highlight {
+    margin: 1em -0.8rem;
+  }
+  .md-content__inner > .tabbed-set .tabbed-block > .highlight > pre,
+  .md-content__inner > .tabbed-set .tabbed-block > .highlight > .filename {
+    margin: 0;
+    border-radius: 0;
+  }
+}
+
+/* Catalog: kit ids stay on one line. */
+.md-typeset td:first-child code {
+  white-space: nowrap;
+}
+
+/* Three cards side by side when there is room. */
+@media screen and (min-width: 60em) {
+  .md-typeset .grid.cards.three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.md-typeset .grid.cards.compact > ul > li {
+  padding: 0.8rem 1rem;
+}
+.md-typeset .grid.cards.compact p {
+  margin: 0.3em 0;
+}
+.md-typeset .servers {
+  font-size: 0.7rem;
+  color: var(--md-default-fg-color--light);
+}
+
+/* Phones: a recipe is a feature over its command, not two cramped columns. */
+@media screen and (max-width: 44.9844em) {
+  .md-typeset .recipes table:not([class]) thead {
+    display: none;
+  }
+  .md-typeset .recipes table:not([class]),
+  .md-typeset .recipes table:not([class]) tbody,
+  .md-typeset .recipes table:not([class]) tr,
+  .md-typeset .recipes table:not([class]) td {
+    display: block;
+  }
+  .md-typeset .recipes table:not([class]) td:last-child {
+    padding-top: 0;
+  }
+}

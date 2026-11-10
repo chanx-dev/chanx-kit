@@ -9,6 +9,9 @@
 - title: Presence
   what: Who is in a room, document or tenant
   add: "@chanx-kit/presence @chanx-kit-ui/presence"
+- title: Agent streaming
+  what: Stream any agent's events to the browser over AG-UI, cancel, share a run across tabs
+  add: "@chanx-kit/ag-ui @chanx-kit-ui/ag-ui"
 - title: AI agent
   what: A Pydantic AI agent streaming over AG-UI, approvals included
   add: "@chanx-kit/pydantic-ai-ag-ui @chanx-kit-ui/ag-ui"

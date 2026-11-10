@@ -37,6 +37,7 @@ docs = [
   "mkdocs-gen-files>=0.5",
   "mkdocs-literate-nav>=0.6",
   "mkdocs-material>=9.5",
+  "mkdocs-redirects>=1.2",
   "mkdocs>=1.6",
   "mkdocstrings[python]>=0.27",
   {include-group = "registry"}

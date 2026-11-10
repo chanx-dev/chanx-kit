@@ -9,7 +9,7 @@ copit add @chanx-kit/conversation-store
 ## Why a string
 
 Every agent framework has its own message type and its own serialisation for it.
-Storing that type would mean a backend per framework — Postgres history for Pydantic AI,
+Storing that type would mean a backend per framework: Postgres history for Pydantic AI,
 then again for LangChain, then again for the next one. Storing serialised text instead
 means one backend serves them all, and the framework kit converts at the edge:
 
@@ -60,5 +60,5 @@ class TaskletTopic(PydanticAIAgUiTopic):
 | Method | Returns | Notes |
 |---|---|---|
 | `load(thread_id)` | `str \| None` | `None` when the thread has no conversation yet |
-| `save(thread_id, conversation)` | — | Replaces the whole conversation |
-| `delete(thread_id)` | — | A missing thread is not an error |
+| `save(thread_id, conversation)` | `None` | Replaces the whole conversation |
+| `delete(thread_id)` | `None` | A missing thread is not an error |

@@ -53,7 +53,7 @@ def delete_task(task_id: str) -> str:
 ```
 
 The paused run ends with `RUN_FINISHED` carrying an
-[interrupt](https://docs.ag-ui.com/concepts/interrupts) — the tool call, a prompt,
+[interrupt](https://docs.ag-ui.com/concepts/interrupts): the tool call, a prompt,
 and the JSON schema of the answer it expects. The client resumes by sending another
 `ag_ui_run` with a `resume` entry:
 
@@ -78,7 +78,7 @@ answer it, and the server keeps no pending-approval state of its own.
 ## The conversation stays here
 
 AG-UI has the client send the whole message list with every run. This kit keeps the
-conversation server-side instead, so `messages` carries only the new turn — which is
+conversation server-side instead, so `messages` carries only the new turn, which is
 what makes a resumed approval work with `"messages": []`.
 
 Persistence comes from the
@@ -98,7 +98,7 @@ class TaskletTopic(PydanticAIAgUiTopic):
 ```
 
 On subscribe the topic sends the conversation back as AG-UI's `MESSAGES_SNAPSHOT`,
-converted by the same adapter that writes the live stream — so a reload renders the
+converted by the same adapter that writes the live stream, so a reload renders the
 prompts, tool cards and answers it had before, with no replay protocol of its own.
 Set `send_transcript = False` for a client that keeps its own messages.
 

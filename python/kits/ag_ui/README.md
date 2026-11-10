@@ -49,7 +49,7 @@ conversations can share one connection.
 ## One run at a time
 
 A thread runs one run at a time. Ask it to start another while one is in flight and
-the second is turned away with a `RUN_ERROR` naming the run that holds the thread —
+the second is turned away with a `RUN_ERROR` naming the run that holds the thread:
 sent to the connection that asked and to nobody else, so the other tabs watching the
 run in flight are not told it failed.
 
@@ -61,7 +61,7 @@ mid-conversation and leave a joining connection replaying a stream that starts
 part-way through a message.
 
 The claim is per thread, so separate conversations still run concurrently. Override
-`on_run_refused` to answer differently — to log and stay silent, or to queue:
+`on_run_refused` to answer differently: to log and stay silent, or to queue:
 
 ```python
 class MyAgUiTopic(AgUiTopic):
@@ -74,8 +74,8 @@ class MyAgUiTopic(AgUiTopic):
 !!! warning
     The default `InMemoryActiveRunStore`, like the replay buffer, is process-local.
     With more than one worker, two runs landing on different processes can both be
-    told the thread was free. Implement `ActiveRunStore` against Redis — `SET NX` is
-    enough — before running more than one process.
+    told the thread was free. Implement `ActiveRunStore` against Redis (`SET NX` is
+    enough) before running more than one process.
 
 ## Stopping a run
 
@@ -96,14 +96,14 @@ The run is named rather than implied, so a cancel that arrives just after its ru
 ended cannot stop the one that replaced it. A cancel for a run that is already
 finished does nothing.
 
-Any tab can cancel, not only the one that started the run — like approvals, the run
+Any tab can cancel, not only the one that started the run; like approvals, the run
 belongs to the thread.
 
 **A run nobody can see stops on its own.** When `broadcast_run_events` is off, a run
 writes to the one socket that asked for it, so if that connection goes away the rest
 of the run can never be seen and producing it only costs money. Leaving cancels it.
 When runs *are* broadcast the opposite holds: the run belongs to the thread, the
-other tabs are still watching, and it keeps going — which is what a mid-run refresh
+other tabs are still watching, and it keeps going, which is what a mid-run refresh
 depends on.
 
 !!! warning
@@ -120,7 +120,7 @@ provider you drive yourself: yield content events, and the run is bracketed for 
 ### When the provider emits its own lifecycle
 
 An agent framework with AG-UI support of its own already emits `RUN_STARTED` and
-`RUN_FINISHED`, and its `RUN_FINISHED` carries the run's outcome — which can mean
+`RUN_FINISHED`, and its `RUN_FINISHED` carries the run's outcome, which can mean
 more than "done", so it must not be replaced by a synthesised one. Override
 `run_events` rather than `run_agent` to pass a provider's whole stream through
 untouched:
@@ -138,7 +138,7 @@ matches how much of the protocol your provider already speaks.
 ## Several tabs on one run
 
 By default a run is written straight down the socket that asked for it. Set
-`broadcast_run_events` to let every connection on a thread watch it instead — a
+`broadcast_run_events` to let every connection on a thread watch it instead: a
 second tab, or the same tab after a refresh:
 
 ```python
@@ -201,7 +201,7 @@ class MyAgUiTopic(AgUiTopic):
 
 `transcript()` is the one piece of state the kit asks about by name. It returns
 nothing here, because only a provider that keeps the conversation knows how to render
-it — usually as `MESSAGES_SNAPSHOT`. A provider that does so overrides it, and
+it, usually as `MESSAGES_SNAPSHOT`. A provider that does so overrides it, and
 `send_transcript = False` turns it off for a client that keeps its own messages.
 
 ## Emitting from elsewhere

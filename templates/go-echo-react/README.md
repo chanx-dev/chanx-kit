@@ -36,17 +36,17 @@ REDIS_URL=redis://localhost:6399/0 go run ./cmd/notify "Build finished"
 | `internal/app/app.go` | Consumer and the kit topics it lists |
 | `main.go` | Routes on Echo, including `POST /api/notify` |
 | `internal/wskits/` | Kits copied by copit, yours to edit |
-| `web/src/generated/` | Typed client, from `npm --prefix web run gen` |
+| `web/src/generated/` | Typed client, from `npm --prefix web run gen` while the server runs (`gen:offline` without it) |
 | `web/src/chanx-kit/` | UI kits copied by copit: a core, React hooks and components, CSS |
 | `copit.toml` | Kit sources, for `copit update` |
 
 ## Add a kit
 
-Both registries are set up in `copit.toml`, so one command adds the server and browser
-halves:
+Both registries are set up in `copit.toml`, so one [copit](https://kit.chanx.dev/getting-started/#1-install-copit)
+command adds the server and browser halves:
 
 ```bash
-uvx copit add @chanx-kit-go/room-chat @chanx-kit-ui/chat
+copit add @chanx-kit-go/room-chat @chanx-kit-ui/chat
 ```
 
 1. List its topics on a consumer in `internal/app/app.go`.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Render the Go and JS templates: fastapi-react's ``web/`` on each framework.
+"""Render the Go, JS and Django templates: fastapi-react's ``web/`` on each framework.
 
 python scripts/templates.py build    # render, then go mod tidy / npm install and codegen
 python scripts/templates.py check    # fail if a rendered file differs from the template
@@ -28,7 +28,13 @@ COPIED_AT = "2026-11-03T00:00:00Z"
 SOURCE = "github:chanx-dev/chanx-kit"
 
 # Written by go mod tidy, npm install and codegen, so check leaves them alone.
-TOOL_OUTPUTS = ("go.mod", "go.sum", "package-lock.json", "web/src/generated/")
+TOOL_OUTPUTS = (
+    "go.mod",
+    "go.sum",
+    "package-lock.json",
+    "uv.lock",
+    "web/src/generated/",
+)
 WEB_SKIP = ("node_modules/", "dist/", "asyncapi.json", "src/generated/")
 
 JS_COMMON = {
@@ -41,7 +47,7 @@ JS_COMMON = {
 
 @dataclass(frozen=True)
 class Template:
-    language: str  # "go" or "js"
+    language: str  # "go", "js" or "python"
     framework: str
     title: str
     requires: tuple[str, ...] = ()
@@ -57,6 +63,7 @@ class Template:
 
 
 ALL = (
+    Template("python", "django", "Django"),
     Template("go", "nethttp", "net/http"),
     Template("go", "chi", "chi", ("github.com/go-chi/chi/v5",)),
     Template("go", "gin", "gin", ("go.chanx.dev/adapters/gin/v2",)),
@@ -86,14 +93,18 @@ ALL = (
 KITS = {
     "go": ("chanx-kit-go", "internal/wskits"),
     "js": ("chanx-kit-js", "src/ws-kits"),
+    "python": ("chanx-kit", "app/ws_kits"),
 }
+# Written by hand, but its copit.toml and kit copies follow RELEASE like the rest.
+FASTAPI = TEMPLATES / "fastapi-react"
 
 
 def index(folder: str) -> dict[str, Any]:
     return json.loads((REPO_ROOT / folder / "copit-registry.json").read_text())
 
 
-def web_files(gen: str) -> dict[str, bytes]:
+def web_files(offline: str, schema: str = "/asyncapi.json") -> dict[str, bytes]:
+    """The shared web app; ``gen`` reads the running server, ``gen:offline`` its code."""
     files: dict[str, bytes] = {}
     for path in sorted(WEB.rglob("*")):
         relative = path.relative_to(WEB).as_posix()
@@ -101,7 +112,19 @@ def web_files(gen: str) -> dict[str, bytes]:
             continue
         files[f"web/{relative}"] = path.read_bytes()
     package = json.loads(files["web/package.json"])
-    package["scripts"]["gen"] = gen
+    scripts: dict[str, str] = {}
+    for key, value in package["scripts"].items():
+        match key:
+            case "gen":
+                scripts["gen"] = (
+                    f"chanx-codegen http://localhost:8000{schema} -o src/generated"
+                )
+                scripts["gen:offline"] = offline
+            case "gen:offline":
+                pass
+            case _:
+                scripts[key] = value
+    package["scripts"] = scripts
     files["web/package.json"] = (json.dumps(package, indent=2) + "\n").encode()
     return files
 
@@ -118,17 +141,18 @@ def kit_files(language: str, name: str) -> dict[str, bytes]:
     return files
 
 
-def copit_toml(language: str) -> str:
+def copit_toml(language: str, variant: str = "") -> str:
     registry, target = KITS[language]
     kit = index(language)["components"]["notification"]
     ui = index("ui")["components"]["notification"]
     pinned = f"{SOURCE}@{RELEASE}"
+    variants = f'\nvariants = ["{variant}"]' if variant else ""
     return f"""target = "vendor"
 
 [registries.{registry}]
 source = "{pinned}"
 index = "{language}/copit-registry.json"
-target = "{target}"
+target = "{target}"{variants}
 
 [registries.chanx-kit-ui]
 source = "{pinned}"
@@ -142,7 +166,7 @@ source = "{pinned}/{kit["path"]}"
 ref = "{RELEASE}"
 copied_at = "{COPIED_AT}"
 component = "{registry}:notification"
-component_version = "{kit["version"]}"
+component_version = "{kit["version"]}"{variants}
 
 [[sources]]
 path = "web/src/chanx-kit/notification"
@@ -188,12 +212,23 @@ def render(template: Template) -> dict[str, bytes]:
         "docker-compose.yml": (
             TEMPLATES / "fastapi-react" / "docker-compose.yml"
         ).read_bytes(),
-        "copit.toml": copit_toml(template.language).encode(),
+        "copit.toml": copit_toml(
+            template.language, "django" if template.language == "python" else ""
+        ).encode(),
         **kit_files(template.language, "notification"),
     }
+    schema = "/asyncapi.json"
     match template.language:
+        case "python":
+            schema = "/asyncapi/schema/"
+            offline = "cd .. && uv run python manage.py generate_asyncapi_schema --format json > web/asyncapi.json && cd web && chanx-codegen asyncapi.json -o src/generated"
+            files |= {
+                path.relative_to(shared).as_posix(): path.read_bytes()
+                for path in sorted(shared.rglob("*"))
+                if path.is_file() and path.name not in ("README.md", "gitignore")
+            }
         case "go":
-            gen = "cd .. && go run ./cmd/asyncapi > web/asyncapi.json && cd web && chanx-codegen asyncapi.json -o src/generated"
+            offline = "cd .. && go run ./cmd/asyncapi > web/asyncapi.json && cd web && chanx-codegen asyncapi.json -o src/generated"
             files |= {
                 "main.go": (shared / f"main.{template.framework}.go").read_bytes(),
                 "internal/app/app.go": (shared / "app.go").read_bytes(),
@@ -201,7 +236,7 @@ def render(template: Template) -> dict[str, bytes]:
                 "cmd/asyncapi/main.go": (shared / "asyncapi.go").read_bytes(),
             }
         case "js":
-            gen = "cd .. && npx tsx src/asyncapi.ts > web/asyncapi.json && cd web && chanx-codegen asyncapi.json -o src/generated"
+            offline = "cd .. && npx tsx src/asyncapi.ts > web/asyncapi.json && cd web && chanx-codegen asyncapi.json -o src/generated"
             files |= {
                 "package.json": js_package(template).encode(),
                 "tsconfig.json": (shared / "tsconfig.json").read_bytes(),
@@ -214,7 +249,7 @@ def render(template: Template) -> dict[str, bytes]:
             }
         case _:
             raise ValueError(template.language)
-    return files | web_files(gen)
+    return files | web_files(offline, schema)
 
 
 def run(command: list[str], cwd: Path) -> str:
@@ -227,6 +262,21 @@ def tooling(template: Template) -> None:
     """Dependencies, then the typed client generated from the server's own schema."""
     directory = template.directory
     match template.language:
+        case "python":
+            run(["uv", "lock", "-q"], directory)
+            spec = run(
+                [
+                    "uv",
+                    "run",
+                    "-q",
+                    "python",
+                    "manage.py",
+                    "generate_asyncapi_schema",
+                    "--format",
+                    "json",
+                ],
+                directory,
+            )
         case "go":
             if not (directory / "go.mod").exists():
                 (directory / "go.mod").write_text("module app\n\ngo 1.25.0\n")
@@ -256,7 +306,12 @@ def build(template: Template) -> None:
                 path.is_file()
                 and relative not in keep
                 and not relative.startswith(
-                    ("node_modules/", "web/node_modules/", "web/src/generated/")
+                    (
+                        ".venv/",
+                        "node_modules/",
+                        "web/node_modules/",
+                        "web/src/generated/",
+                    )
                 )
             )
             if stale:
@@ -269,13 +324,24 @@ def build(template: Template) -> None:
     print(f"Wrote templates/{template.name} ({len(rendered)} files)")
 
 
-def check(template: Template) -> list[str]:
+def fastapi_files() -> dict[str, bytes]:
+    return {
+        "copit.toml": copit_toml("python", "fastapi").encode(),
+        **kit_files("python", "notification"),
+    }
+
+
+def stale_files(directory: Path, rendered: dict[str, bytes]) -> list[str]:
     return [
-        f"templates/{template.name}/{relative}"
-        for relative, content in render(template).items()
-        if not (template.directory / relative).is_file()
-        or (template.directory / relative).read_bytes() != content
+        f"templates/{directory.name}/{relative}"
+        for relative, content in rendered.items()
+        if not (directory / relative).is_file()
+        or (directory / relative).read_bytes() != content
     ]
+
+
+def check(template: Template) -> list[str]:
+    return stale_files(template.directory, render(template))
 
 
 def main() -> int:
@@ -284,13 +350,20 @@ def main() -> int:
     parser.add_argument("names", nargs="*", help="only these templates")
     args = parser.parse_args()
     chosen = [t for t in ALL if not args.names or t.name in args.names]
+    with_fastapi = not args.names or FASTAPI.name in args.names
 
     if args.command == "build":
         for template in chosen:
             build(template)
+        if with_fastapi:
+            for relative, content in fastapi_files().items():
+                (FASTAPI / relative).write_bytes(content)
+            print(f"Wrote templates/{FASTAPI.name} copit.toml and kit copies")
         return 0
 
     stale = [path for template in chosen for path in check(template)]
+    if with_fastapi:
+        stale += stale_files(FASTAPI, fastapi_files())
     if stale:
         print(
             "Templates out of date: "

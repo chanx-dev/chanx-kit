@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "gen": "cd .. && npx tsx src/asyncapi.ts > web/asyncapi.json && cd web && chanx-codegen asyncapi.json -o src/generated",
+    "gen": "chanx-codegen http://localhost:8000/asyncapi.json -o src/generated",
+    "gen:offline": "cd .. && npx tsx src/asyncapi.ts > web/asyncapi.json && cd web && chanx-codegen asyncapi.json -o src/generated",
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",

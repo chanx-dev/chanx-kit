@@ -9,7 +9,7 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   server: {
-    // Served by FastAPI on :8000.
+    // The server, on :8000.
     proxy: {
       '/ws': { target: 'ws://localhost:8000', ws: true },
       '/api': 'http://localhost:8000',

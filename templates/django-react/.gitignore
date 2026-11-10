@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.venv/
+node_modules/
+web/dist/
+web/asyncapi.json
+db.sqlite3

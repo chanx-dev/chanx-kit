@@ -3,7 +3,7 @@ title: Chat room
 description: >-
   A chat log with history on join and a composer, for any server speaking the chat
   contract. Shows the room's roster through the presence UI kit.
-version: 0.1.0
+version: 0.1.1
 tier: core
 role: feature
 area: messaging

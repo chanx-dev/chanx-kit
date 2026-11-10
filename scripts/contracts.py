@@ -248,7 +248,9 @@ def main() -> int:
             print(f"{directory.name}: consumes undefined {contract}", file=sys.stderr)
             return 1
         kit, topic_name = defined[contract]
-        rendered = render(kit, contract, python_spec(kit, topic_name))
+        rendered = strictest(
+            contract, render(kit, contract, python_spec(kit, topic_name))
+        )
         stale += sync(directory / "contract.ts", rendered, args.command, contract)
 
     for contract, targets in SCHEMA_EXPORTS.items():
@@ -271,6 +273,15 @@ def main() -> int:
             return 1
         print("Contracts OK.")
     return 0
+
+
+def strictest(contract: str, rendered: str) -> str:
+    """A UI kit must suit every server, so it takes each port's stricter form."""
+    for language, kit, implemented in implementations():
+        if implemented == contract:
+            for python_line, port_line in KNOWN_GAPS.get((language, kit), []):
+                rendered = rendered.replace(python_line, port_line)
+    return rendered
 
 
 def sync(target: Path, rendered: str, command: str, contract: str) -> list[str]:

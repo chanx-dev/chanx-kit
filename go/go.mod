@@ -15,7 +15,7 @@ require (
 	go.chanx.dev/adapters/gin/v2 v2.0.0
 	go.chanx.dev/layers/redis/v2 v2.0.0
 	go.chanx.dev/layers/v2 v2.0.0
-	go.chanx.dev/v2 v2.1.0
+	go.chanx.dev/v2 v2.2.0
 )
 
 require (

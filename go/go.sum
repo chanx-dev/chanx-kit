@@ -145,8 +145,8 @@ go.chanx.dev/layers/redis/v2 v2.0.0 h1:Vc0UDznintuZ2EmcQKJLLd0N5xCOOVQ9dtoI1Rghq
 go.chanx.dev/layers/redis/v2 v2.0.0/go.mod h1:+ZlZgen6Ez94R5fNoLlaTWCZG0kPHzPHXUQ0jKFUFdo=
 go.chanx.dev/layers/v2 v2.0.0 h1:vfAVxKZaXUvBQ5y5tlZdXLXRzE+f7HQ7IgA7IEAI9DY=
 go.chanx.dev/layers/v2 v2.0.0/go.mod h1:U4Haz8W4d1n4jS2wulfSUJQ1TgFROqPLiLJjQq1v3EM=
-go.chanx.dev/v2 v2.1.0 h1:GUPBOxMcKGwO2A2Od1iYcyOwroiiligdO0dJ9gSqrDA=
-go.chanx.dev/v2 v2.1.0/go.mod h1:kKSzpbiW0ExVnn5rWtY+N/wcBoE8y0oB4qljW72TwF0=
+go.chanx.dev/v2 v2.2.0 h1:euOnRz5L+mGJCZyMYYQQpBF7MNIY4Yix+NZF/XSYAqY=
+go.chanx.dev/v2 v2.2.0/go.mod h1:kKSzpbiW0ExVnn5rWtY+N/wcBoE8y0oB4qljW72TwF0=
 go.mongodb.org/mongo-driver/v2 v2.5.0 h1:yXUhImUjjAInNcpTcAlPHiT7bIXhshCTL3jVBkF3xaE=
 go.mongodb.org/mongo-driver/v2 v2.5.0/go.mod h1:yOI9kBsufol30iFsl1slpdq1I0eHPzybRWdyYUs8K/0=
 go.uber.org/atomic v1.12.0 h1:BvcXdFKuviU4fTL/f+SxdQ5qJX/Jix8pAkgdUcb3XOE=

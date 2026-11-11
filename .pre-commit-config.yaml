@@ -30,7 +30,7 @@ repos:
     rev: v0.24.2
     hooks:
       - id: toml-sort-fix
-        exclude: ^uv\.lock$ # identify types it as TOML, but uv owns its formatting
+        exclude: (^|/)uv\.lock$ # identify types it as TOML, but uv owns its formatting
 
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.6.12

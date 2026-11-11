@@ -22,7 +22,7 @@ export interface Serve {
   chanx: Chanx;
   port: number;
   ui: string;
-  about: { server: 'js'; framework: string };
+  about: { server: 'js'; framework: string; providers: Record<string, string> };
 }
 
 // The same consumers on each framework; only the mounting differs.

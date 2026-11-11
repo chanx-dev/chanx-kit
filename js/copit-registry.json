@@ -62,6 +62,377 @@
         }
       }
     },
+    "audio-stream-in": {
+      "name": "audio-stream-in",
+      "title": "Audio stream in",
+      "description": "Stream microphone audio in over the socket and get transcripts back, from any speech-to-text provider. Speaks the transcriber contract; provider kits plug in a stream. Bounded streams, per-user limits, gap detection and watcher fan-out.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "js/kits/audio-stream-in",
+      "tags": [
+        "audio",
+        "speech-to-text",
+        "transcription",
+        "streaming"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "media-stream-in"
+      ],
+      "dependencies": [
+        "@chanx-js/server@^2.2.0",
+        "zod@^4.1.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "index.ts",
+        "messages.ts",
+        "provider.ts",
+        "topics.ts"
+      ],
+      "optional": {
+        "tests": {
+          "include": [
+            "tests/audio-stream-in.test.ts"
+          ],
+          "dependencies": [
+            "vitest@^3.2.4"
+          ]
+        }
+      }
+    },
+    "audio-stream-out": {
+      "name": "audio-stream-out",
+      "title": "Audio stream out",
+      "description": "Speak text to a session's listeners from any text-to-speech provider. Speaks the synthesizer contract; provider kits plug in audio. Utterances queue in order, an interruption clears them, late joiners are replayed, and playback marks record what was actually heard.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "js/kits/audio-stream-out",
+      "tags": [
+        "audio",
+        "text-to-speech",
+        "speech",
+        "streaming"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "media-stream-out"
+      ],
+      "dependencies": [
+        "@chanx-js/server@^2.2.0",
+        "zod@^4.1.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "index.ts",
+        "messages.ts",
+        "playback.ts",
+        "topics.ts"
+      ],
+      "optional": {
+        "tests": {
+          "include": [
+            "tests/audio-stream-out.test.ts"
+          ],
+          "dependencies": [
+            "vitest@^3.2.4"
+          ]
+        }
+      }
+    },
+    "deepgram": {
+      "name": "deepgram",
+      "title": "Deepgram",
+      "description": "Deepgram behind the voice contracts: live speech-to-text (Nova) and streaming text-to-speech (Aura). Install both, or one part with `--only stt` or `--only tts`. The API key stays on the server.",
+      "tier": "contrib",
+      "version": "0.1.0",
+      "path": "js/kits/deepgram",
+      "tags": [
+        "audio",
+        "speech-to-text",
+        "text-to-speech",
+        "deepgram",
+        "provider"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "audio-stream-in",
+        "audio-stream-out"
+      ],
+      "dependencies": [
+        "@chanx-js/server@^2.2.0",
+        "ws@^8.18.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "deepgram.ts",
+        "index.ts",
+        "synthesizer.ts",
+        "transcriber.ts"
+      ],
+      "optional": {
+        "tests": {
+          "include": [
+            "tests/fake.ts",
+            "tests/synthesizer.test.ts",
+            "tests/transcriber.test.ts"
+          ],
+          "dependencies": [
+            "vitest@^3.2.4"
+          ]
+        }
+      },
+      "parts": {
+        "stt": {
+          "include": [
+            "deepgram.ts",
+            "transcriber.ts",
+            "tests/fake.ts",
+            "tests/transcriber.test.ts"
+          ],
+          "requires": [
+            "audio-stream-in"
+          ]
+        },
+        "tts": {
+          "include": [
+            "deepgram.ts",
+            "synthesizer.ts",
+            "tests/fake.ts",
+            "tests/synthesizer.test.ts"
+          ],
+          "requires": [
+            "audio-stream-out"
+          ]
+        }
+      }
+    },
+    "elevenlabs": {
+      "name": "elevenlabs",
+      "title": "ElevenLabs",
+      "description": "ElevenLabs behind the voice contracts: realtime speech-to-text (Scribe) and streaming text-to-speech. Install both, or one part with `--only stt` or `--only tts`. The API key stays on the server.",
+      "tier": "contrib",
+      "version": "0.1.0",
+      "path": "js/kits/elevenlabs",
+      "tags": [
+        "audio",
+        "speech-to-text",
+        "text-to-speech",
+        "elevenlabs",
+        "provider"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "audio-stream-in",
+        "audio-stream-out"
+      ],
+      "dependencies": [
+        "@chanx-js/server@^2.2.0",
+        "ws@^8.18.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "elevenlabs.ts",
+        "index.ts",
+        "synthesizer.ts",
+        "transcriber.ts"
+      ],
+      "optional": {
+        "tests": {
+          "include": [
+            "tests/fake.ts",
+            "tests/synthesizer.test.ts",
+            "tests/transcriber.test.ts"
+          ],
+          "dependencies": [
+            "vitest@^3.2.4"
+          ]
+        }
+      },
+      "parts": {
+        "stt": {
+          "include": [
+            "elevenlabs.ts",
+            "transcriber.ts",
+            "tests/fake.ts",
+            "tests/transcriber.test.ts"
+          ],
+          "requires": [
+            "audio-stream-in"
+          ]
+        },
+        "tts": {
+          "include": [
+            "elevenlabs.ts",
+            "synthesizer.ts",
+            "tests/fake.ts",
+            "tests/synthesizer.test.ts"
+          ],
+          "requires": [
+            "audio-stream-out"
+          ]
+        }
+      }
+    },
+    "fake-voice": {
+      "name": "fake-voice",
+      "title": "Fake voice",
+      "description": "A transcriber and a synthesizer that need no provider and no key: speech is transcribed as a scripted sentence, text is spoken as a tone per word. For demos, UI work and CI. Install both, or one part with `--only stt` or `--only tts`.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "js/kits/fake-voice",
+      "tags": [
+        "audio",
+        "speech-to-text",
+        "text-to-speech",
+        "testing",
+        "demo"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "audio-stream-in",
+        "audio-stream-out"
+      ],
+      "dependencies": [
+        "@chanx-js/server@^2.2.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "index.ts",
+        "synthesizer.ts",
+        "transcriber.ts"
+      ],
+      "optional": {
+        "tests": {
+          "include": [
+            "tests/synthesizer.test.ts",
+            "tests/transcriber.test.ts"
+          ],
+          "dependencies": [
+            "vitest@^3.2.4"
+          ]
+        }
+      },
+      "parts": {
+        "stt": {
+          "include": [
+            "transcriber.ts",
+            "tests/transcriber.test.ts"
+          ],
+          "requires": [
+            "audio-stream-in"
+          ]
+        },
+        "tts": {
+          "include": [
+            "synthesizer.ts",
+            "tests/synthesizer.test.ts"
+          ],
+          "requires": [
+            "audio-stream-out"
+          ]
+        }
+      }
+    },
+    "media-stream-in": {
+      "name": "media-stream-in",
+      "title": "Media stream in",
+      "description": "The plumbing for media a client streams in: bytes that travel as base64, chunks put back in order with gaps reported, and a bounded real-time intake with keepalive and idle handling. The base the audio kits build on.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "js/kits/media-stream-in",
+      "tags": [
+        "media",
+        "streaming",
+        "audio",
+        "bytes"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [],
+      "dependencies": [
+        "zod@^4.1.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "data.ts",
+        "index.ts",
+        "intake.ts",
+        "sequencer.ts"
+      ],
+      "optional": {
+        "tests": {
+          "include": [
+            "tests/media-stream-in.test.ts"
+          ],
+          "dependencies": [
+            "vitest@^3.2.4"
+          ]
+        }
+      }
+    },
+    "media-stream-out": {
+      "name": "media-stream-out",
+      "title": "Media stream out",
+      "description": "The plumbing for media the server streams out: producers run one at a time per session and can be cut off as a whole, and what was sent is kept so a connection joining part-way is replayed. The base the speech output kits build on.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "js/kits/media-stream-out",
+      "tags": [
+        "media",
+        "streaming",
+        "audio",
+        "replay"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "media-stream-in"
+      ],
+      "dependencies": [],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "index.ts",
+        "jobs.ts",
+        "replay.ts"
+      ],
+      "optional": {
+        "tests": {
+          "include": [
+            "tests/media-stream-out.test.ts"
+          ],
+          "dependencies": [
+            "vitest@^3.2.4"
+          ]
+        }
+      }
+    },
     "notification": {
       "name": "notification",
       "title": "Notification",
@@ -97,6 +468,80 @@
           ],
           "dependencies": [
             "vitest@^3.2.4"
+          ]
+        }
+      }
+    },
+    "openai": {
+      "name": "openai",
+      "title": "OpenAI",
+      "description": "OpenAI behind the voice contracts: realtime transcription and streamed text-to-speech. Install both, or one part with `--only stt` or `--only tts`. The API key stays on the server.",
+      "tier": "contrib",
+      "version": "0.1.0",
+      "path": "js/kits/openai",
+      "tags": [
+        "audio",
+        "speech-to-text",
+        "text-to-speech",
+        "openai",
+        "provider"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "audio-stream-in",
+        "audio-stream-out"
+      ],
+      "dependencies": [
+        "@chanx-js/server@^2.2.0",
+        "ws@^8.18.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "index.ts",
+        "openai.ts",
+        "synthesizer.ts",
+        "transcriber.ts"
+      ],
+      "optional": {
+        "tests": {
+          "include": [
+            "tests/synthesizer.test.ts",
+            "tests/transcriber.test.ts"
+          ],
+          "dependencies": [
+            "vitest@^3.2.4"
+          ]
+        }
+      },
+      "parts": {
+        "stt": {
+          "include": [
+            "openai.ts",
+            "transcriber.ts",
+            "tests/transcriber.test.ts"
+          ],
+          "requires": [
+            "audio-stream-in"
+          ],
+          "dependencies": [
+            "ws@^8.18.0"
+          ]
+        },
+        "tts": {
+          "include": [
+            "openai.ts",
+            "synthesizer.ts",
+            "tests/synthesizer.test.ts"
+          ],
+          "requires": [
+            "audio-stream-out"
+          ],
+          "dependencies": [
+            "@chanx-js/server@^2.2.0"
           ]
         }
       }
@@ -216,6 +661,51 @@
         "tests": {
           "include": [
             "tests/room-chat.test.ts"
+          ],
+          "dependencies": [
+            "vitest@^3.2.4"
+          ]
+        }
+      }
+    },
+    "voice-agent": {
+      "name": "voice-agent",
+      "title": "Voice agent",
+      "description": "Talk to an AG-UI agent: what you say is transcribed and sent as a turn, the reply is spoken sentence by sentence as it streams, and speaking over it interrupts, keeping only what was actually heard. Composes the AG-UI, transcriber and synthesizer kits.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "js/kits/voice-agent",
+      "tags": [
+        "voice",
+        "agent",
+        "ag-ui",
+        "speech"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "ag-ui",
+        "audio-stream-in",
+        "audio-stream-out"
+      ],
+      "dependencies": [
+        "@chanx-js/server@^2.2.0",
+        "@ag-ui/core@^1.0.4"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "agent.ts",
+        "index.ts",
+        "memory.ts",
+        "sentences.ts"
+      ],
+      "optional": {
+        "tests": {
+          "include": [
+            "tests/voice-agent.test.ts"
           ],
           "dependencies": [
             "vitest@^3.2.4"

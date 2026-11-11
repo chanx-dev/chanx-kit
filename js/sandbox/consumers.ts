@@ -1,9 +1,14 @@
 import type { RunAgentInput } from '@ag-ui/core';
 import { EventType } from '@ag-ui/core';
-import type { ConnectRequest } from '@chanx-js/server';
+import type { Chanx, ConnectRequest } from '@chanx-js/server';
 import { PingMessage, PongMessage, consumer } from '@chanx-js/server';
 
 import { AgUiRunTopic, agUiTopic } from '../kits/ag-ui';
+import { TranscriptTopic, transcriberTopic } from '../kits/audio-stream-in';
+import { deepgramTranscriber } from '../kits/deepgram/transcriber';
+import { elevenLabsSynthesizerTopic } from '../kits/elevenlabs/synthesizer';
+import { fakeSynthesizerTopic } from '../kits/fake-voice/synthesizer';
+import { fakeTranscriber } from '../kits/fake-voice/transcriber';
 import {
   BroadcastNotificationTopic,
   SubjectNotificationTopic,
@@ -11,6 +16,7 @@ import {
 } from '../kits/notification';
 import { PresenceTopic } from '../kits/presence';
 import { RoomChatTopic } from '../kits/room-chat';
+import { voiceAgent } from '../kits/voice-agent';
 
 /** What a real `authenticate` would return; the kits read `id` and `username`. */
 export interface DemoUser {
@@ -62,3 +68,54 @@ export const agent = consumer('/ws/agent', {
   authenticate,
   topics: [agUiTopic({ runAgent: cannedReply }), AgUiRunTopic],
 }).on(PingMessage, { output: PongMessage }, () => PongMessage.create());
+
+/** A real provider when its key is set, the fake otherwise; the client cannot tell. */
+export function voiceProviders() {
+  return {
+    stt: process.env.DEEPGRAM_API_KEY ? 'deepgram' : 'fake-voice',
+    tts: process.env.ELEVENLABS_API_KEY ? 'elevenlabs' : 'fake-voice',
+  };
+}
+
+/** The voice and assistant consumers; built after the environment is loaded. */
+export function voiceConsumers() {
+  const providers = voiceProviders();
+  const stt = providers.stt === 'deepgram' ? deepgramTranscriber() : fakeTranscriber();
+  // Named apart, so the two demos' sessions never share a group.
+  const synthesizer = (name: string) =>
+    providers.tts === 'elevenlabs' ? elevenLabsSynthesizerTopic({}, { name }) : fakeSynthesizerTopic({}, { name });
+
+  const transcriber = transcriberTopic(stt);
+  const voice = consumer('/ws/voice', {
+    name: 'voice',
+    description: 'Speech in and out: transcripts from audio, audio from text.',
+    authenticate,
+    topics: [transcriber, TranscriptTopic, synthesizer('SynthesizerTopic')],
+  });
+
+  // A voice agent with the scripted reply, named apart from the plain agent.
+  const assistant = voiceAgent({
+    runAgent: cannedReply,
+    synthesizer: synthesizer('AssistantSynthesizerTopic'),
+    name: 'AssistantAgUiTopic',
+  });
+  const assistantConsumer = consumer('/ws/assistant', {
+    name: 'assistant',
+    description: 'A voice agent: speak, hear the reply, interrupt by speaking.',
+    authenticate,
+    topics: [
+      assistant.transcriberTopic({ ...stt, name: 'AssistantTranscriberTopic' }),
+      assistant.topic,
+      assistant.synthesizer,
+    ],
+  });
+
+  return {
+    consumers: [voice, assistantConsumer],
+    /** Wires the server-side helpers to the app. */
+    attach(chanx: Chanx) {
+      transcriber.attach(chanx);
+      assistant.attach(chanx);
+    },
+  };
+}

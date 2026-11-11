@@ -1,0 +1,27 @@
+name: audio-stream-in
+title: Audio stream in
+description: >-
+  Stream microphone audio in over the socket and get transcripts back, from any
+  speech-to-text provider. Speaks the transcriber contract; provider kits plug in a
+  stream. Bounded streams, per-user limits, gap detection and watcher fan-out.
+version: 0.1.0
+tier: core
+role: foundation
+area: voice
+tags: [audio, speech-to-text, transcription, streaming]
+authors: ["Huy Nguyen <ndhgl99@gmail.com>"]
+
+requires:
+  - media-stream-in
+
+implements: [transcriber@1]
+contract_topic: TranscriberTopic
+
+dependencies:
+  - "@chanx-js/server@^2.2.0"
+  - "zod@^4.1.0"
+
+optional:
+  tests:
+    dependencies:
+      - "vitest@^3.2.4"

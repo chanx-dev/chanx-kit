@@ -3,7 +3,7 @@ import { InMemoryChannelLayer } from '@chanx-js/layers';
 import { RedisPubSubChannelLayer } from '@chanx-js/layers/redis';
 import { createChanx } from '@chanx-js/server';
 
-import { agent, notifications, room } from './consumers';
+import { agent, notifications, room, voiceConsumers } from './consumers';
 
 /** REDIS_URL from the environment or the repo's `.env`. */
 export function redisUrl(): string | undefined {
@@ -20,7 +20,13 @@ export function createSandbox(redis?: string) {
   const layer: ChannelLayer = redis
     ? new RedisPubSubChannelLayer({ hosts: [redis], prefix: 'chanx-kit' })
     : new InMemoryChannelLayer();
-  return createChanx({ consumers: [notifications, room, agent], layers: { default: layer } });
+  const voice = voiceConsumers();
+  const chanx = createChanx({
+    consumers: [notifications, room, agent, ...voice.consumers],
+    layers: { default: layer },
+  });
+  voice.attach(chanx);
+  return chanx;
 }
 
 export const asyncapi = {

@@ -3,6 +3,7 @@
 import { parseArgs } from 'node:util';
 
 import { createSandbox, redisUrl } from './app';
+import { voiceProviders } from './consumers';
 import { frameworks } from './frameworks';
 
 const { values } = parseArgs({
@@ -22,7 +23,7 @@ await serve({
   chanx: createSandbox(redis),
   port: Number(values.port),
   ui: values.ui,
-  about: { server: 'js', framework },
+  about: { server: 'js', framework, providers: voiceProviders() },
 });
 console.log(
   `chanx-kit JS sandbox on :${values.port} with ${framework}, channel layer ${redis ? `redis (${redis})` : 'in-memory'}`,

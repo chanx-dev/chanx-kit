@@ -1,0 +1,26 @@
+name: voice-agent
+title: Voice agent
+description: >-
+  Talk to an AG-UI agent: what you say is transcribed and sent as a turn, the reply is
+  spoken sentence by sentence as it streams, and speaking over it interrupts, keeping
+  only what was actually heard. Composes the AG-UI, transcriber and synthesizer kits.
+version: 0.1.0
+tier: core
+role: feature
+area: voice
+tags: [voice, agent, ag-ui, speech]
+authors: ["Huy Nguyen <ndhgl99@gmail.com>"]
+
+requires:
+  - ag-ui
+  - audio-stream-in
+  - audio-stream-out
+
+dependencies:
+  - "@chanx-js/server@^2.2.0"
+  - "@ag-ui/core@^1.0.4"
+
+optional:
+  tests:
+    dependencies:
+      - "vitest@^3.2.4"

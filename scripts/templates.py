@@ -23,7 +23,7 @@ WEB = TEMPLATES / "fastapi-react" / "web"
 CODEGEN = REPO_ROOT / "ui" / "node_modules" / ".bin" / "chanx-codegen"
 
 # The release these templates' copit.toml pins; bump it when tagging.
-RELEASE = "v0.5.0"
+RELEASE = "v0.5.1"
 COPIED_AT = "2026-11-03T00:00:00Z"
 SOURCE = "github:chanx-dev/chanx-kit"
 

@@ -1,28 +1,28 @@
 target = "vendor"
 
 [registries.chanx-kit-go]
-source = "github:chanx-dev/chanx-kit@v0.5.0"
+source = "github:chanx-dev/chanx-kit@v0.5.1"
 index = "go/copit-registry.json"
 target = "internal/wskits"
 
 [registries.chanx-kit-ui]
-source = "github:chanx-dev/chanx-kit@v0.5.0"
+source = "github:chanx-dev/chanx-kit@v0.5.1"
 index = "ui/copit-registry.json"
 target = "web/src/chanx-kit"
 variants = ["react"]
 
 [[sources]]
 path = "internal/wskits/notification"
-source = "github:chanx-dev/chanx-kit@v0.5.0/go/kits/notification"
-ref = "v0.5.0"
+source = "github:chanx-dev/chanx-kit@v0.5.1/go/kits/notification"
+ref = "v0.5.1"
 copied_at = "2026-11-03T00:00:00Z"
 component = "chanx-kit-go:notification"
 component_version = "0.1.0"
 
 [[sources]]
 path = "web/src/chanx-kit/notification"
-source = "github:chanx-dev/chanx-kit@v0.5.0/ui/kits/notification"
-ref = "v0.5.0"
+source = "github:chanx-dev/chanx-kit@v0.5.1/ui/kits/notification"
+ref = "v0.5.1"
 copied_at = "2026-11-03T00:00:00Z"
 component = "chanx-kit-ui:notification"
 component_version = "0.1.0"

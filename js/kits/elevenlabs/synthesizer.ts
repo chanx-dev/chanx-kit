@@ -14,6 +14,8 @@ export function refusal(error: string, voice: string) {
 export interface ElevenLabsSynthesizerOptions {
   /** Defaults to ELEVENLABS_API_KEY. */
   apiKey?: string;
+  /** Bounds opening the connection, so a stalled provider is reported; 10 s by default. */
+  connectTimeoutMs?: number;
   /** Has a `{voice_id}` placeholder. */
   url?: string;
   /** Sarah by default: premade on every plan. Retired voices such as Rachel cost money. */
@@ -42,7 +44,7 @@ export function elevenLabsSynthesize(options: ElevenLabsSynthesizerOptions = {})
     const apiKey = keyOf(options.apiKey);
     if (!apiKey) throw new SynthesizerUnavailableError('ELEVENLABS_API_KEY is not set.');
     const voice = requested ?? options.voice ?? 'EXAVITQu4vr4xnSDxMaL';
-    const socket = await dial(streamUrl(voice, format, options), apiKey, SynthesizerUnavailableError);
+    const socket = await dial(streamUrl(voice, format, options), apiKey, SynthesizerUnavailableError, options.connectTimeoutMs);
     const inbox = new Inbox(socket, () => signal.aborted);
     const stop = () => socket.close();
     signal.addEventListener('abort', stop, { once: true });

@@ -48,3 +48,6 @@ partial: a fraction of a second late, enough for the voice agent's barge-in.
 Speech uses the `stream-input` socket as raw PCM at the output rate. Use a premade voice
 on the free tier: others answer `payment_required`, reported as `provider_unavailable`
 with that hint.
+
+A provider that does not answer within 10 s is reported as `provider_unavailable`
+rather than leaving the utterance waiting; the `connectTimeoutMs` option changes it.

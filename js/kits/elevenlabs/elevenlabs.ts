@@ -8,16 +8,24 @@ export const supported = (rate: number, channels: number) => PCM_RATES.includes(
 /** The key given, or ELEVENLABS_API_KEY when used, so a .env loaded after start works. */
 export const keyOf = (apiKey?: string) => apiKey || process.env.ELEVENLABS_API_KEY || undefined;
 
-/** Connects with the key; a refusal throws `Unavailable`. */
-export function dial(url: string, apiKey: string, Unavailable: new (message: string) => Error) {
+/** Connects with the key; a refusal or a stall throws `Unavailable`. */
+export function dial(url: string, apiKey: string, Unavailable: new (message: string) => Error, timeoutMs = 10_000) {
   return new Promise<WebSocket>((resolve, reject) => {
-    const socket = new WebSocket(url, { headers: { 'xi-api-key': apiKey } });
+    const socket = new WebSocket(url, { headers: { 'xi-api-key': apiKey }, handshakeTimeout: timeoutMs });
     socket.once('open', () => resolve(socket));
     socket.once('unexpected-response', (_req, res) => {
       reject(new Unavailable(`ElevenLabs refused the connection (${res.statusCode}).`));
       socket.terminate();
     });
-    socket.once('error', (error) => reject(new Unavailable(`ElevenLabs is unreachable: ${error.message}`)));
+    socket.once('error', (error) =>
+      reject(
+        new Unavailable(
+          error.message.includes('handshake has timed out')
+            ? `ElevenLabs did not answer within ${timeoutMs / 1000} s.`
+            : `ElevenLabs is unreachable: ${error.message}`,
+        ),
+      ),
+    );
   });
 }
 

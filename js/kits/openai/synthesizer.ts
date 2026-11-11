@@ -5,6 +5,8 @@ import { PCM_RATE, keyOf } from './openai';
 export interface OpenAISynthesizerOptions {
   /** Defaults to OPENAI_API_KEY. */
   apiKey?: string;
+  /** Bounds opening the connection, so a stalled provider is reported; 10 s by default. */
+  connectTimeoutMs?: number;
   url?: string;
   model?: string;
   voice?: string;
@@ -28,17 +30,24 @@ export function openAISynthesize(options: OpenAISynthesizerOptions = {}): Synthe
       response_format: 'pcm',
       ...(options.instructions ? { instructions: options.instructions } : {}),
     };
+    // Only waiting for the response is bounded, not streaming the audio.
+    const timeoutMs = options.connectTimeoutMs ?? 10_000;
+    const waiting = new AbortController();
+    const timer = setTimeout(() => waiting.abort(), timeoutMs);
     let response: Response;
     try {
       response = await fetch(options.url ?? 'https://api.openai.com/v1/audio/speech', {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
-        signal,
+        signal: AbortSignal.any([signal, waiting.signal]),
       });
     } catch (error) {
       if (signal.aborted) return;
+      if (waiting.signal.aborted) throw new SynthesizerUnavailableError(`OpenAI did not answer within ${timeoutMs / 1000} s.`);
       throw new SynthesizerUnavailableError(`OpenAI is unreachable: ${(error as Error).message}`);
+    } finally {
+      clearTimeout(timer);
     }
     if (response.status === 401 || response.status === 403) {
       throw new SynthesizerUnavailableError(`OpenAI refused the request (${response.status}).`);

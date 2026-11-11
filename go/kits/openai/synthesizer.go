@@ -8,6 +8,7 @@ import (
 	"io"
 	"iter"
 	"net/http"
+	"time"
 
 	"go.chanx.dev/kit/kits/audiostreamout"
 )
@@ -54,7 +55,11 @@ func (s Synthesizer) Synthesize(ctx context.Context, text, voice string, format 
 			body["instructions"] = s.Instructions
 		}
 		raw, _ := json.Marshal(body)
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, or(s.URL, "https://api.openai.com/v1/audio/speech"), bytes.NewReader(raw))
+		// Only waiting for the response is bounded, not streaming the audio.
+		rctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		waiting := time.AfterFunc(ConnectTimeout, cancel)
+		req, err := http.NewRequestWithContext(rctx, http.MethodPost, or(s.URL, "https://api.openai.com/v1/audio/speech"), bytes.NewReader(raw))
 		if err != nil {
 			yield(nil, err)
 			return
@@ -62,6 +67,13 @@ func (s Synthesizer) Synthesize(ctx context.Context, text, voice string, format 
 		req.Header.Set("Authorization", "Bearer "+apiKey)
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := or(s.Client, http.DefaultClient).Do(req)
+		if !waiting.Stop() && ctx.Err() == nil {
+			if err == nil {
+				resp.Body.Close()
+			}
+			yield(nil, fmt.Errorf("%w: OpenAI did not answer within %s", audiostreamout.ErrProviderUnavailable, ConnectTimeout))
+			return
+		}
 		if err != nil {
 			yield(nil, fmt.Errorf("%w: OpenAI is unreachable: %v", audiostreamout.ErrProviderUnavailable, err))
 			return

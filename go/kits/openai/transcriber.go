@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"iter"
 	"math"
@@ -60,12 +61,17 @@ func (t Transcriber) Open(ctx context.Context, audio audiostreamin.AudioStart) (
 	if or(audio.SampleRate, PCMRate) != PCMRate || or(audio.Channels, 1) != 1 {
 		return nil, fmt.Errorf("%w: OpenAI realtime takes PCM16 mono at 24 kHz", audiostreamin.ErrProviderUnavailable)
 	}
-	conn, resp, err := websocket.Dial(ctx, or(t.URL, "wss://api.openai.com/v1/realtime?intent=transcription"), &websocket.DialOptions{
+	dctx, cancel := context.WithTimeout(ctx, ConnectTimeout)
+	defer cancel()
+	conn, resp, err := websocket.Dial(dctx, or(t.URL, "wss://api.openai.com/v1/realtime?intent=transcription"), &websocket.DialOptions{
 		HTTPHeader: http.Header{"Authorization": {"Bearer " + apiKey}},
 	})
 	if err != nil {
 		if resp != nil {
 			return nil, fmt.Errorf("%w: OpenAI refused the connection (%d)", audiostreamin.ErrProviderUnavailable, resp.StatusCode)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+			return nil, fmt.Errorf("%w: OpenAI did not answer within %s", audiostreamin.ErrProviderUnavailable, ConnectTimeout)
 		}
 		return nil, fmt.Errorf("%w: OpenAI is unreachable: %v", audiostreamin.ErrProviderUnavailable, err)
 	}

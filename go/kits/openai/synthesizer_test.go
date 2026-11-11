@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"go.chanx.dev/kit/kits/audiostreamout"
 )
@@ -67,4 +69,32 @@ func TestOnly24kHzMonoIsOffered(t *testing.T) {
 	if !errors.Is(err, audiostreamout.ErrProviderUnavailable) {
 		t.Fatalf("err %v", err)
 	}
+}
+
+func TestAProviderThatNeverAnswersIsReported(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { listener.Close() })
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				return
+			}
+			t.Cleanup(func() { conn.Close() })
+		}
+	}()
+	defer func(previous time.Duration) { ConnectTimeout = previous }(ConnectTimeout)
+	ConnectTimeout = 100 * time.Millisecond
+
+	s := Synthesizer{APIKey: testKey, URL: "http://" + listener.Addr().String() + "/{voice_id}"}
+	for _, err := range s.Synthesize(context.Background(), "hi", "", audiostreamout.DefaultSpeechFormat) {
+		if !errors.Is(err, audiostreamout.ErrProviderUnavailable) || !strings.Contains(err.Error(), "did not answer") {
+			t.Fatalf("err %v", err)
+		}
+		return
+	}
+	t.Fatal("no error")
 }

@@ -48,3 +48,6 @@ for barge-in; it needs `gpt-4o-transcribe` or `gpt-4o-mini-transcribe`, since th
 `gpt-live-transcribe` refuses turn detection.
 
 Speech posts to `/v1/audio/speech` with `response_format: pcm` and streams the body.
+
+A provider that does not answer within 10 s is reported as `provider_unavailable`
+rather than leaving the utterance waiting; the `connectTimeoutMs` option changes it.

@@ -1,8 +1,11 @@
+import { createServer } from 'node:net';
+import type { AddressInfo, Socket } from 'node:net';
+
 import { consumer, createChanx } from '@chanx-js/server';
 import { connect } from '@chanx-js/server/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { deepgramSynthesizerTopic, speakUrl } from '../synthesizer';
+import { deepgramSynthesize, deepgramSynthesizerTopic, speakUrl } from '../synthesizer';
 import type { DeepgramSynthesizerOptions } from '../synthesizer';
 import { KEY, fakeDeepgram, speak } from './fake';
 
@@ -49,5 +52,22 @@ describe('deepgram synthesizer', () => {
     const error = (await c.receiveUntil('synthesizer_error')).at(-1)!.payload as { code: string; message: string };
     expect(error.code).toBe('provider_unavailable');
     expect(error.message).toContain('401');
+  });
+  it('reports a provider that never answers', async () => {
+    const sockets: Socket[] = [];
+    const silent = createServer((socket) => void sockets.push(socket));
+    await new Promise<void>((r) => silent.listen(0, '127.0.0.1', r));
+    closers.push(() => {
+      sockets.forEach((socket) => socket.destroy());
+      silent.close();
+    });
+    const host = `127.0.0.1:${(silent.address() as AddressInfo).port}`;
+    const speech = deepgramSynthesize({ apiKey: 'k', url: `ws://${host}/{voice_id}`, connectTimeoutMs: 100 });
+    const format = { encoding: 'pcm16' as const, sample_rate: 24000, channels: 1 };
+    await expect(
+      (async () => {
+        for await (const _ of speech('hi', undefined, format, new AbortController().signal));
+      })(),
+    ).rejects.toThrow('did not answer');
   });
 });

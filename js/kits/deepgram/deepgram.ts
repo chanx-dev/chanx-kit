@@ -3,16 +3,24 @@ import WebSocket from 'ws';
 /** The key given, or DEEPGRAM_API_KEY when used, so a .env loaded after start works. */
 export const keyOf = (apiKey?: string) => apiKey || process.env.DEEPGRAM_API_KEY || undefined;
 
-/** Connects with the key; a refusal throws `Unavailable`. */
-export function dial(url: string, apiKey: string, Unavailable: new (message: string) => Error) {
+/** Connects with the key; a refusal or a stall throws `Unavailable`. */
+export function dial(url: string, apiKey: string, Unavailable: new (message: string) => Error, timeoutMs = 10_000) {
   return new Promise<WebSocket>((resolve, reject) => {
-    const socket = new WebSocket(url, { headers: { Authorization: `Token ${apiKey}` } });
+    const socket = new WebSocket(url, { headers: { Authorization: `Token ${apiKey}` }, handshakeTimeout: timeoutMs });
     socket.once('open', () => resolve(socket));
     socket.once('unexpected-response', (_req, res) => {
       reject(new Unavailable(`Deepgram refused the connection (${res.statusCode}).`));
       socket.terminate();
     });
-    socket.once('error', (error) => reject(new Unavailable(`Deepgram is unreachable: ${error.message}`)));
+    socket.once('error', (error) =>
+      reject(
+        new Unavailable(
+          error.message.includes('handshake has timed out')
+            ? `Deepgram did not answer within ${timeoutMs / 1000} s.`
+            : `Deepgram is unreachable: ${error.message}`,
+        ),
+      ),
+    );
   });
 }
 

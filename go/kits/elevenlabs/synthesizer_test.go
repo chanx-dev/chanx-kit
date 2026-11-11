@@ -1,9 +1,13 @@
 package elevenlabs
 
 import (
+	"context"
+	"errors"
+	"net"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	chanx "go.chanx.dev/v2"
 	"go.chanx.dev/v2/chanxtest"
@@ -85,4 +89,32 @@ func TestAPlanRefusalSaysWhatToChange(t *testing.T) {
 	if got := Refusal("something_new", "v1"); got != "ElevenLabs: something_new" {
 		t.Fatal(got)
 	}
+}
+
+func TestAProviderThatNeverAnswersIsReported(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { listener.Close() })
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				return
+			}
+			t.Cleanup(func() { conn.Close() })
+		}
+	}()
+	defer func(previous time.Duration) { ConnectTimeout = previous }(ConnectTimeout)
+	ConnectTimeout = 100 * time.Millisecond
+
+	s := Synthesizer{APIKey: testKey, URL: "ws://" + listener.Addr().String() + "/{voice_id}"}
+	for _, err := range s.Synthesize(context.Background(), "hi", "", audiostreamout.DefaultSpeechFormat) {
+		if !errors.Is(err, audiostreamout.ErrProviderUnavailable) || !strings.Contains(err.Error(), "did not answer") {
+			t.Fatalf("err %v", err)
+		}
+		return
+	}
+	t.Fatal("no error")
 }

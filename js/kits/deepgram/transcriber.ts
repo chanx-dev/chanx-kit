@@ -81,6 +81,8 @@ export class DeepgramStream implements TranscriberStream {
 export interface DeepgramTranscriberOptions {
   /** Defaults to DEEPGRAM_API_KEY. */
   apiKey?: string;
+  /** Bounds opening the connection, so a stalled provider is reported; 10 s by default. */
+  connectTimeoutMs?: number;
   url?: string;
   model?: string;
   options?: Record<string, string>;
@@ -111,7 +113,7 @@ export function deepgramTranscriber(options: DeepgramTranscriberOptions = {}): T
     openStream: async (audio) => {
       const apiKey = keyOf(options.apiKey);
       if (!apiKey) throw new ProviderUnavailableError('DEEPGRAM_API_KEY is not set.');
-      return new DeepgramStream(await dial(listenUrl(audio, options), apiKey, ProviderUnavailableError));
+      return new DeepgramStream(await dial(listenUrl(audio, options), apiKey, ProviderUnavailableError, options.connectTimeoutMs));
     },
   };
 }

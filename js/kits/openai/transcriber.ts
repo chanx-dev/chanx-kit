@@ -114,6 +114,8 @@ export class OpenAITranscriberStream implements TranscriberStream {
 export interface OpenAITranscriberOptions {
   /** Defaults to OPENAI_API_KEY. */
   apiKey?: string;
+  /** Bounds opening the connection, so a stalled provider is reported; 10 s by default. */
+  connectTimeoutMs?: number;
   url?: string;
   model?: string;
   /**
@@ -142,15 +144,23 @@ export function sessionUpdate(audio: AudioStart, options: OpenAITranscriberOptio
   };
 }
 
-function dial(url: string, apiKey: string) {
+function dial(url: string, apiKey: string, timeoutMs = 10_000) {
   return new Promise<WebSocket>((resolve, reject) => {
-    const socket = new WebSocket(url, { headers: { Authorization: `Bearer ${apiKey}` } });
+    const socket = new WebSocket(url, { headers: { Authorization: `Bearer ${apiKey}` }, handshakeTimeout: timeoutMs });
     socket.once('open', () => resolve(socket));
     socket.once('unexpected-response', (_req, res) => {
       reject(new ProviderUnavailableError(`OpenAI refused the connection (${res.statusCode}).`));
       socket.terminate();
     });
-    socket.once('error', (error) => reject(new ProviderUnavailableError(`OpenAI is unreachable: ${error.message}`)));
+    socket.once('error', (error) =>
+      reject(
+        new ProviderUnavailableError(
+          error.message.includes('handshake has timed out')
+            ? `OpenAI did not answer within ${timeoutMs / 1000} s.`
+            : `OpenAI is unreachable: ${error.message}`,
+        ),
+      ),
+    );
   });
 }
 
@@ -164,7 +174,11 @@ export function openAITranscriber(options: OpenAITranscriberOptions = {}): Trans
       if (audio.sample_rate !== PCM_RATE || audio.channels !== 1) {
         throw new ProviderUnavailableError('OpenAI realtime takes PCM16 mono at 24 kHz.');
       }
-      const socket = await dial(options.url ?? 'wss://api.openai.com/v1/realtime?intent=transcription', apiKey);
+      const socket = await dial(
+        options.url ?? 'wss://api.openai.com/v1/realtime?intent=transcription',
+        apiKey,
+        options.connectTimeoutMs,
+      );
       const stream = new OpenAITranscriberStream(socket);
       socket.send(JSON.stringify(sessionUpdate(audio, options)));
       return stream;

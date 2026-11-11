@@ -1,9 +1,12 @@
+import { createServer } from 'node:net';
+import type { AddressInfo, Socket } from 'node:net';
+
 import { consumer, createChanx } from '@chanx-js/server';
 import { connect } from '@chanx-js/server/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SynthesizerUnavailableError } from '../../audio-stream-out';
-import { elevenLabsSynthesizerTopic, refusal, streamUrl } from '../synthesizer';
+import { elevenLabsSynthesize, elevenLabsSynthesizerTopic, refusal, streamUrl } from '../synthesizer';
 import type { ElevenLabsSynthesizerOptions } from '../synthesizer';
 import { KEY, fakeElevenLabs, streamInput } from './fake';
 
@@ -66,5 +69,22 @@ describe('elevenlabs synthesizer', () => {
       'ElevenLabs: payment_required (voice v1 is not available on this plan; use a premade voice)',
     );
     expect(refusal('something_new', 'v1')).toBe('ElevenLabs: something_new');
+  });
+  it('reports a provider that never answers', async () => {
+    const sockets: Socket[] = [];
+    const silent = createServer((socket) => void sockets.push(socket));
+    await new Promise<void>((r) => silent.listen(0, '127.0.0.1', r));
+    closers.push(() => {
+      sockets.forEach((socket) => socket.destroy());
+      silent.close();
+    });
+    const host = `127.0.0.1:${(silent.address() as AddressInfo).port}`;
+    const speech = elevenLabsSynthesize({ apiKey: 'k', url: `ws://${host}/{voice_id}`, connectTimeoutMs: 100 });
+    const format = { encoding: 'pcm16' as const, sample_rate: 24000, channels: 1 };
+    await expect(
+      (async () => {
+        for await (const _ of speech('hi', undefined, format, new AbortController().signal));
+      })(),
+    ).rejects.toThrow('did not answer');
   });
 });

@@ -41,3 +41,6 @@ Speech opens the `speak` socket with `linear16` at the output rate, sends `Speak
 `Flush`, and streams the audio until `Flushed`. Audio travels as binary frames to
 Deepgram; base64 is only on the browser leg. No SDK: the tests run against a local
 server speaking the documented protocol.
+
+A provider that does not answer within 10 s is reported as `provider_unavailable`
+rather than leaving the utterance waiting; `ConnectTimeout` changes it.

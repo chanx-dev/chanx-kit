@@ -108,6 +108,8 @@ export class ElevenLabsTranscriberStream implements TranscriberStream {
 export interface ElevenLabsTranscriberOptions {
   /** Defaults to ELEVENLABS_API_KEY. */
   apiKey?: string;
+  /** Bounds opening the connection, so a stalled provider is reported; 10 s by default. */
+  connectTimeoutMs?: number;
   url?: string;
   modelId?: string;
   options?: Record<string, string>;
@@ -134,7 +136,7 @@ export function elevenLabsTranscriber(options: ElevenLabsTranscriberOptions = {}
     openStream: async (audio) => {
       const apiKey = keyOf(options.apiKey);
       if (!apiKey) throw new ProviderUnavailableError('ELEVENLABS_API_KEY is not set.');
-      const socket = await dial(realtimeUrl(audio, options), apiKey, ProviderUnavailableError);
+      const socket = await dial(realtimeUrl(audio, options), apiKey, ProviderUnavailableError, options.connectTimeoutMs);
       return new ElevenLabsTranscriberStream(socket, audio.sample_rate);
     },
   };

@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
-import type { AddressInfo } from 'node:net';
+import { createServer as createTcpServer } from 'node:net';
+import type { AddressInfo, Socket } from 'node:net';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -61,5 +62,22 @@ describe('openai synthesizer', () => {
 
   it('offers only 24 kHz mono', async () => {
     await expect(collect({ apiKey: KEY }, 16000)).rejects.toThrow(SynthesizerUnavailableError);
+  });
+  it('reports a provider that never answers', async () => {
+    const sockets: Socket[] = [];
+    const silent = createTcpServer((socket) => void sockets.push(socket));
+    await new Promise<void>((r) => silent.listen(0, '127.0.0.1', r));
+    closers.push(() => {
+      sockets.forEach((socket) => socket.destroy());
+      silent.close();
+    });
+    const host = `127.0.0.1:${(silent.address() as AddressInfo).port}`;
+    const speech = openAISynthesize({ apiKey: 'k', url: `http://${host}/v1/audio/speech`, connectTimeoutMs: 100 });
+    const format = { encoding: 'pcm16' as const, sample_rate: 24000, channels: 1 };
+    await expect(
+      (async () => {
+        for await (const _ of speech('hi', undefined, format, new AbortController().signal));
+      })(),
+    ).rejects.toThrow('did not answer');
   });
 });

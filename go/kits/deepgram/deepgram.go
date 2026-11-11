@@ -3,9 +3,11 @@ package deepgram
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/coder/websocket"
 )
@@ -18,14 +20,22 @@ func key(apiKey string) string {
 	return os.Getenv("DEEPGRAM_API_KEY")
 }
 
+// ConnectTimeout bounds opening a connection, so a stalled provider is reported.
+var ConnectTimeout = 10 * time.Second
+
 // dial connects with the key, turning a refusal into unavailable.
 func dial(ctx context.Context, address, apiKey string, unavailable error) (*websocket.Conn, error) {
+	ctx, cancel := context.WithTimeout(ctx, ConnectTimeout)
+	defer cancel()
 	conn, resp, err := websocket.Dial(ctx, address, &websocket.DialOptions{
 		HTTPHeader: http.Header{"Authorization": {"Token " + apiKey}},
 	})
 	if err != nil {
 		if resp != nil {
 			return nil, fmt.Errorf("%w: Deepgram refused the connection (%d)", unavailable, resp.StatusCode)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+			return nil, fmt.Errorf("%w: Deepgram did not answer within %s", unavailable, ConnectTimeout)
 		}
 		return nil, fmt.Errorf("%w: Deepgram is unreachable: %v", unavailable, err)
 	}

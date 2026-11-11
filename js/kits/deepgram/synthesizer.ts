@@ -8,6 +8,8 @@ export const PCM_RATES = [8000, 16000, 24000, 32000, 48000];
 export interface DeepgramSynthesizerOptions {
   /** Defaults to DEEPGRAM_API_KEY. */
   apiKey?: string;
+  /** Bounds opening the connection, so a stalled provider is reported; 10 s by default. */
+  connectTimeoutMs?: number;
   url?: string;
   /** The default Aura model. */
   voice?: string;
@@ -26,7 +28,7 @@ export function deepgramSynthesize(options: DeepgramSynthesizerOptions = {}): Sy
     const apiKey = keyOf(options.apiKey);
     if (!apiKey) throw new SynthesizerUnavailableError('DEEPGRAM_API_KEY is not set.');
     const url = speakUrl(voice ?? options.voice ?? 'aura-2-thalia-en', format, options.url);
-    const socket = await dial(url, apiKey, SynthesizerUnavailableError);
+    const socket = await dial(url, apiKey, SynthesizerUnavailableError, options.connectTimeoutMs);
     const inbox = new Inbox(socket, () => signal.aborted);
     const stop = () => socket.close();
     signal.addEventListener('abort', stop, { once: true });

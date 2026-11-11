@@ -19,6 +19,7 @@ implements: [transcriber@1, synthesizer@1]
 dependencies:
   - "@chanx-js/server@^2.2.0"
   - "ws@^8.18.0"
+  - "@types/ws@^8.18.0"
 
 optional:
   tests:

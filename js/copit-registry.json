@@ -171,7 +171,8 @@
       ],
       "dependencies": [
         "@chanx-js/server@^2.2.0",
-        "ws@^8.18.0"
+        "ws@^8.18.0",
+        "@types/ws@^8.18.0"
       ],
       "variants": {},
       "only_variants": [],
@@ -242,7 +243,8 @@
       ],
       "dependencies": [
         "@chanx-js/server@^2.2.0",
-        "ws@^8.18.0"
+        "ws@^8.18.0",
+        "@types/ws@^8.18.0"
       ],
       "variants": {},
       "only_variants": [],
@@ -495,7 +497,8 @@
       ],
       "dependencies": [
         "@chanx-js/server@^2.2.0",
-        "ws@^8.18.0"
+        "ws@^8.18.0",
+        "@types/ws@^8.18.0"
       ],
       "variants": {},
       "only_variants": [],
@@ -528,7 +531,8 @@
             "audio-stream-in"
           ],
           "dependencies": [
-            "ws@^8.18.0"
+            "ws@^8.18.0",
+            "@types/ws@^8.18.0"
           ]
         },
         "tts": {

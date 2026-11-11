@@ -19,6 +19,7 @@ implements: [transcriber@1, synthesizer@1]
 dependencies:
   - "@chanx-js/server@^2.2.0"
   - "ws@^8.18.0"
+  - "@types/ws@^8.18.0"
 
 optional:
   tests:
@@ -30,7 +31,7 @@ parts:
     include: [openai.ts, transcriber.ts, tests/transcriber.test.ts]
     requires: [audio-stream-in]
     implements: [transcriber@1]
-    dependencies: ["ws@^8.18.0"]
+    dependencies: ["ws@^8.18.0", "@types/ws@^8.18.0"]
   tts:
     include: [openai.ts, synthesizer.ts, tests/synthesizer.test.ts]
     requires: [audio-stream-out]

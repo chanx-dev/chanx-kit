@@ -34,7 +34,7 @@ const a = await tab();
 check(await shows(a.locator('.chanx-notifications[data-state="open"]')), 'the notification feed connects');
 check((await a.locator('.brand').innerText()).includes(`${server} · ${framework}`), 'the sidebar names the server');
 const nav = await a.locator('nav').innerText();
-check(nav.includes('AG-UI') && (server === 'python') === nav.includes('Voice agent'), 'only the demos this server has are listed');
+check(['AG-UI', 'Speech to text', 'Text to speech', 'Voice agent'].every((demo) => nav.includes(demo)), 'every demo is listed');
 
 if (notify.length) {
   const [command, ...args] = notify;

@@ -180,10 +180,11 @@ def python_spec(kit: str, topic_name: str) -> str:
     ).stdout
 
 
-def port_spec(language: str, kit: str) -> str:
+def port_spec(language: str, kit: str, contract: str) -> str:
+    """The port's spec for ``contract``; a provider can implement several."""
     cwd, command = PORT_SPECS[language]
     return subprocess.run(
-        [*command, kit], cwd=cwd, check=True, capture_output=True, text=True
+        [*command, kit, contract], cwd=cwd, check=True, capture_output=True, text=True
     ).stdout
 
 
@@ -305,7 +306,7 @@ def port_drift(defined: dict[str, tuple[str, str]]) -> list[str]:
             "", render(python_kit, contract, python_spec(python_kit, topic_name))
         )
         actual = DOC_COMMENT.sub(
-            "", render(python_kit, contract, port_spec(language, kit))
+            "", render(python_kit, contract, port_spec(language, kit, contract))
         )
         expected, actual = inline_aliases(expected), inline_aliases(actual)
         for python_line, port_line in KNOWN_GAPS.get((language, kit), []):

@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@ag-ui/core": "^1.0.4",
-    "@chanx-js/server": "^2.2.0",
+    "@chanx-js/server": "^2.2.1",
     "zod": "^4.1.0"
   },
   "devDependencies": {

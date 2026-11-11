@@ -239,8 +239,6 @@ export function transcriberTopic(options: TranscriberTopicOptions) {
         description: 'Flush the provider, deliver its last transcripts, then close.',
       },
       async (_m, ctx) => {
-        // Without a payload it validates sooner and can overtake the frames before it.
-        await new Promise((resolve) => setImmediate(resolve));
         const session = ctx.state.session;
         if (!session || session.closed || session.endRequested) return;
         session.endRequested = true;

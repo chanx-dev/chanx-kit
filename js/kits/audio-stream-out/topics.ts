@@ -173,8 +173,6 @@ export function synthesizerTopic(options: SynthesizerTopicOptions) {
         description: 'Stop the utterance playing and drop everything queued.',
       },
       async (_m, ctx) => {
-        // Without a payload it validates sooner and can overtake the speak before it.
-        await new Promise((resolve) => setImmediate(resolve));
         await clear((msg, o) => ctx.publish(msg, o), ctx.params.session);
       },
     )

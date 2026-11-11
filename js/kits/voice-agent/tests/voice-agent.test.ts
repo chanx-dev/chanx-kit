@@ -96,10 +96,11 @@ describe('voice agent', () => {
   });
 
   it('sends only the new turn to a provider keeping its own history', async () => {
-    const { agent, session, listen } = setup(echo, true);
+    const { agent, synthesizer, session, listen } = setup(echo, true);
     const c = await listen();
     await agent.respond(session, 'one');
     await until(c, EventType.RUN_FINISHED);
+    await synthesizer.waitUntilSpoken(session);
     await agent.respond(session, 'two');
     expect((await until(c, EventType.TEXT_MESSAGE_CONTENT)).delta).toBe('You said two. I heard 1 messages.');
   });

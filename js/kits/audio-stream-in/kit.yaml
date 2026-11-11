@@ -18,7 +18,7 @@ implements: [transcriber@1]
 contract_topic: TranscriberTopic
 
 dependencies:
-  - "@chanx-js/server@^2.2.0"
+  - "@chanx-js/server@^2.2.1"
   - "zod@^4.1.0"
 
 optional:

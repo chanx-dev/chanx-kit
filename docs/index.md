@@ -129,7 +129,7 @@ other, and the next feature (notifications, an AI agent) is one more line in `to
 
     Live captions, text to speech, a voice agent you can interrupt.
 
-    <span class="servers">Python</span>
+    <span class="servers">Node · Python · Go</span>
 
 -   **[Every kit :material-arrow-right:](kits/index.md#catalog)**
 
@@ -166,7 +166,7 @@ other, and the next feature (notifications, an AI agent) is one more line in `to
 </div>
 
 How the pieces fit: [how it works](how-it-works.md). Using an AI coding assistant? Point it
-at [`llms.txt`](llms.txt), or every page at once in [`llms-full.txt`](llms-full.txt).
+at [`llms.txt`](llms.txt), or every page at once in [`llms-full.txt`](https://kit.chanx.dev/llms-full.txt).
 
 <small>Built on [chanx](https://github.com/chanx-dev/chanx),
 [chanx-go](https://go.chanx.dev/) and [chanx-js](https://js.chanx.dev/), one protocol

@@ -1,0 +1,33 @@
+name: openai
+title: OpenAI
+description: >-
+  OpenAI behind the voice contracts: realtime transcription and streamed text-to-speech.
+  Install both, or one part with `--only stt` or `--only tts`. The API key stays on
+  the server.
+version: 0.1.0
+tier: contrib
+role: provider
+tags: [audio, speech-to-text, text-to-speech, openai, provider]
+authors: ["Huy Nguyen <ndhgl99@gmail.com>"]
+
+requires:
+  - audio-stream-in
+  - audio-stream-out
+
+implements: [transcriber@1, synthesizer@1]
+
+dependencies:
+  - "go.chanx.dev/v2@v2.2.0"
+  - "github.com/coder/websocket@v1.8.15"
+
+parts:
+  stt:
+    include: [openai.go, transcriber.go, transcriber_test.go]
+    requires: [audio-stream-in]
+    implements: [transcriber@1]
+    dependencies: ["github.com/coder/websocket@v1.8.15"]
+  tts:
+    include: [openai.go, synthesizer.go, synthesizer_test.go]
+    requires: [audio-stream-out]
+    implements: [synthesizer@1]
+    dependencies: ["go.chanx.dev/v2@v2.2.0"]

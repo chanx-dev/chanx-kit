@@ -44,7 +44,7 @@ func main() {
 	}
 	engine := chanx.New(chanx.Config{Layers: layerSet()})
 	mount(engine)
-	about := map[string]any{"server": "go", "framework": *framework}
+	about := map[string]any{"server": "go", "framework": *framework, "providers": providers}
 	log.Printf("chanx-kit Go sandbox on %s with %s, channel layer %s", *addr, *framework, layerName())
 	log.Fatal(serve(*addr, engine, about, http.FileServer(http.Dir(*ui))))
 }

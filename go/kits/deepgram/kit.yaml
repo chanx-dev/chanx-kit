@@ -1,0 +1,31 @@
+name: deepgram
+title: Deepgram
+description: >-
+  Deepgram behind the voice contracts: live speech-to-text (Nova) and streaming
+  text-to-speech (Aura). Install both, or one part with `--only stt` or `--only tts`.
+  The API key stays on the server.
+version: 0.1.0
+tier: contrib
+role: provider
+tags: [audio, speech-to-text, text-to-speech, deepgram, provider]
+authors: ["Huy Nguyen <ndhgl99@gmail.com>"]
+
+requires:
+  - audio-stream-in
+  - audio-stream-out
+
+implements: [transcriber@1, synthesizer@1]
+
+dependencies:
+  - "go.chanx.dev/v2@v2.2.0"
+  - "github.com/coder/websocket@v1.8.15"
+
+parts:
+  stt:
+    include: [deepgram.go, transcriber.go, transcriber_test.go, fake_test.go]
+    requires: [audio-stream-in]
+    implements: [transcriber@1]
+  tts:
+    include: [deepgram.go, synthesizer.go, synthesizer_test.go, fake_test.go]
+    requires: [audio-stream-out]
+    implements: [synthesizer@1]

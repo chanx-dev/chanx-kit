@@ -79,7 +79,8 @@ func (t AgUiTopic) active() ActiveRunStore {
 	return DefaultActiveRunStore
 }
 
-func (t AgUiTopic) stream(ctx context.Context, in RunAgentInput) iter.Seq2[Event, error] {
+// Events is a run's whole stream: RunEvents, or RunAgent inside the run's lifecycle.
+func (t AgUiTopic) Events(ctx context.Context, in RunAgentInput) iter.Seq2[Event, error] {
 	if t.RunEvents != nil {
 		return t.RunEvents(ctx, in)
 	}
@@ -116,7 +117,7 @@ func (t AgUiTopic) drive(parent context.Context, in RunAgentInput, emit func(Eve
 	}()
 
 	var failure error
-	for event, err := range t.stream(ctx, in) {
+	for event, err := range t.Events(ctx, in) {
 		if ctx.Err() != nil {
 			break
 		}

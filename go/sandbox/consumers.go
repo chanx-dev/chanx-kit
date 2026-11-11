@@ -94,4 +94,5 @@ func mount(engine *chanx.Engine) {
 		chanx.Description("Room chat with history and a live roster."))
 	engine.Handle("/ws/agent", AgentConsumer{}, chanx.Name("agent"),
 		chanx.Description("AG-UI protocol over a websocket."))
+	mountVoice(engine)
 }

@@ -26,7 +26,7 @@
       "title": "AG-UI",
       "description": "Serve the AG-UI agent-user interaction protocol over a websocket, so any AG-UI frontend works unchanged. Provider-agnostic: yield events from any agent. Optionally broadcasts a run to every connection on its thread, replaying it to late joiners.",
       "tier": "core",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "path": "go/kits/agui",
       "tags": [
         "agent",
@@ -54,6 +54,332 @@
       "optional": {
         "tests": [
           "agui_test.go"
+        ]
+      }
+    },
+    "audio-stream-in": {
+      "name": "audio-stream-in",
+      "title": "Audio stream in",
+      "description": "Stream microphone audio in over the socket and get transcripts back, from any speech-to-text provider. Speaks the transcriber contract; provider kits plug in a stream. Bounded streams, per-user limits, gap detection and watcher fan-out.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "go/kits/audiostreamin",
+      "tags": [
+        "audio",
+        "speech-to-text",
+        "transcription",
+        "streaming"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "media-stream-in"
+      ],
+      "dependencies": [
+        "go.chanx.dev/v2@v2.2.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "messages.go",
+        "provider.go",
+        "topics.go"
+      ],
+      "optional": {
+        "tests": [
+          "audiostreamin_test.go"
+        ]
+      }
+    },
+    "audio-stream-out": {
+      "name": "audio-stream-out",
+      "title": "Audio stream out",
+      "description": "Speak text to a session's listeners from any text-to-speech provider. Speaks the synthesizer contract; provider kits plug in audio. Utterances queue in order, an interruption clears them, late joiners are replayed, and playback marks record what was actually heard.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "go/kits/audiostreamout",
+      "tags": [
+        "audio",
+        "text-to-speech",
+        "speech",
+        "streaming"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "media-stream-out"
+      ],
+      "dependencies": [
+        "go.chanx.dev/v2@v2.2.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "messages.go",
+        "playback.go",
+        "topics.go"
+      ],
+      "optional": {
+        "tests": [
+          "audiostreamout_test.go"
+        ]
+      }
+    },
+    "deepgram": {
+      "name": "deepgram",
+      "title": "Deepgram",
+      "description": "Deepgram behind the voice contracts: live speech-to-text (Nova) and streaming text-to-speech (Aura). Install both, or one part with `--only stt` or `--only tts`. The API key stays on the server.",
+      "tier": "contrib",
+      "version": "0.1.0",
+      "path": "go/kits/deepgram",
+      "tags": [
+        "audio",
+        "speech-to-text",
+        "text-to-speech",
+        "deepgram",
+        "provider"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "audio-stream-in",
+        "audio-stream-out"
+      ],
+      "dependencies": [
+        "go.chanx.dev/v2@v2.2.0",
+        "github.com/coder/websocket@v1.8.15"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "deepgram.go",
+        "synthesizer.go",
+        "transcriber.go"
+      ],
+      "optional": {
+        "tests": [
+          "fake_test.go",
+          "synthesizer_test.go",
+          "transcriber_test.go"
+        ]
+      },
+      "parts": {
+        "stt": {
+          "include": [
+            "deepgram.go",
+            "transcriber.go",
+            "fake_test.go",
+            "transcriber_test.go"
+          ],
+          "requires": [
+            "audio-stream-in"
+          ]
+        },
+        "tts": {
+          "include": [
+            "deepgram.go",
+            "synthesizer.go",
+            "fake_test.go",
+            "synthesizer_test.go"
+          ],
+          "requires": [
+            "audio-stream-out"
+          ]
+        }
+      }
+    },
+    "elevenlabs": {
+      "name": "elevenlabs",
+      "title": "ElevenLabs",
+      "description": "ElevenLabs behind the voice contracts: realtime speech-to-text (Scribe) and streaming text-to-speech. Install both, or one part with `--only stt` or `--only tts`. The API key stays on the server.",
+      "tier": "contrib",
+      "version": "0.1.0",
+      "path": "go/kits/elevenlabs",
+      "tags": [
+        "audio",
+        "speech-to-text",
+        "text-to-speech",
+        "elevenlabs",
+        "provider"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "audio-stream-in",
+        "audio-stream-out"
+      ],
+      "dependencies": [
+        "go.chanx.dev/v2@v2.2.0",
+        "github.com/coder/websocket@v1.8.15"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "elevenlabs.go",
+        "synthesizer.go",
+        "transcriber.go"
+      ],
+      "optional": {
+        "tests": [
+          "fake_test.go",
+          "synthesizer_test.go",
+          "transcriber_test.go"
+        ]
+      },
+      "parts": {
+        "stt": {
+          "include": [
+            "elevenlabs.go",
+            "transcriber.go",
+            "fake_test.go",
+            "transcriber_test.go"
+          ],
+          "requires": [
+            "audio-stream-in"
+          ]
+        },
+        "tts": {
+          "include": [
+            "elevenlabs.go",
+            "synthesizer.go",
+            "fake_test.go",
+            "synthesizer_test.go"
+          ],
+          "requires": [
+            "audio-stream-out"
+          ]
+        }
+      }
+    },
+    "fake-voice": {
+      "name": "fake-voice",
+      "title": "Fake voice",
+      "description": "A transcriber and a synthesizer that need no provider and no key: speech is transcribed as a scripted sentence, text is spoken as a tone per word. For demos, UI work and CI. Install both, or one part with `--only stt` or `--only tts`.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "go/kits/fakevoice",
+      "tags": [
+        "audio",
+        "speech-to-text",
+        "text-to-speech",
+        "testing",
+        "demo"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "audio-stream-in",
+        "audio-stream-out"
+      ],
+      "dependencies": [
+        "go.chanx.dev/v2@v2.2.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "synthesizer.go",
+        "transcriber.go"
+      ],
+      "optional": {
+        "tests": [
+          "synthesizer_test.go",
+          "transcriber_test.go"
+        ]
+      },
+      "parts": {
+        "stt": {
+          "include": [
+            "transcriber.go",
+            "transcriber_test.go"
+          ],
+          "requires": [
+            "audio-stream-in"
+          ]
+        },
+        "tts": {
+          "include": [
+            "synthesizer.go",
+            "synthesizer_test.go"
+          ],
+          "requires": [
+            "audio-stream-out"
+          ]
+        }
+      }
+    },
+    "media-stream-in": {
+      "name": "media-stream-in",
+      "title": "Media stream in",
+      "description": "The plumbing for media a client streams in: chunks put back in order with gaps reported, and a bounded real-time intake with keepalive and idle handling. The base the audio kits build on.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "go/kits/mediastreamin",
+      "tags": [
+        "media",
+        "streaming",
+        "audio",
+        "bytes"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [],
+      "dependencies": [
+        "go.chanx.dev/v2@v2.2.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "intake.go",
+        "sequencer.go"
+      ],
+      "optional": {
+        "tests": [
+          "mediastreamin_test.go"
+        ]
+      }
+    },
+    "media-stream-out": {
+      "name": "media-stream-out",
+      "title": "Media stream out",
+      "description": "The plumbing for media the server streams out: producers run one at a time per session and can be cut off as a whole, and what was sent is kept so a connection joining part-way is replayed. The base the speech output kits build on.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "go/kits/mediastreamout",
+      "tags": [
+        "media",
+        "streaming",
+        "audio",
+        "replay"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [],
+      "dependencies": [
+        "go.chanx.dev/v2@v2.2.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "jobs.go",
+        "replay.go"
+      ],
+      "optional": {
+        "tests": [
+          "mediastreamout_test.go"
         ]
       }
     },
@@ -87,6 +413,74 @@
         "tests": [
           "notification_test.go"
         ]
+      }
+    },
+    "openai": {
+      "name": "openai",
+      "title": "OpenAI",
+      "description": "OpenAI behind the voice contracts: realtime transcription and streamed text-to-speech. Install both, or one part with `--only stt` or `--only tts`. The API key stays on the server.",
+      "tier": "contrib",
+      "version": "0.1.0",
+      "path": "go/kits/openai",
+      "tags": [
+        "audio",
+        "speech-to-text",
+        "text-to-speech",
+        "openai",
+        "provider"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "audio-stream-in",
+        "audio-stream-out"
+      ],
+      "dependencies": [
+        "go.chanx.dev/v2@v2.2.0",
+        "github.com/coder/websocket@v1.8.15"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "openai.go",
+        "synthesizer.go",
+        "transcriber.go"
+      ],
+      "optional": {
+        "tests": [
+          "synthesizer_test.go",
+          "transcriber_test.go"
+        ]
+      },
+      "parts": {
+        "stt": {
+          "include": [
+            "openai.go",
+            "transcriber.go",
+            "transcriber_test.go"
+          ],
+          "requires": [
+            "audio-stream-in"
+          ],
+          "dependencies": [
+            "github.com/coder/websocket@v1.8.15"
+          ]
+        },
+        "tts": {
+          "include": [
+            "openai.go",
+            "synthesizer.go",
+            "synthesizer_test.go"
+          ],
+          "requires": [
+            "audio-stream-out"
+          ],
+          "dependencies": [
+            "go.chanx.dev/v2@v2.2.0"
+          ]
+        }
       }
     },
     "presence": {
@@ -194,6 +588,44 @@
       "optional": {
         "tests": [
           "roomchat_test.go"
+        ]
+      }
+    },
+    "voice-agent": {
+      "name": "voice-agent",
+      "title": "Voice agent",
+      "description": "Talk to an AG-UI agent: what you say is transcribed and sent as a turn, the reply is spoken sentence by sentence as it streams, and speaking over it interrupts, keeping only what was actually heard. Composes the AG-UI, transcriber and synthesizer kits.",
+      "tier": "core",
+      "version": "0.1.0",
+      "path": "go/kits/voiceagent",
+      "tags": [
+        "voice",
+        "agent",
+        "ag-ui",
+        "speech"
+      ],
+      "authors": [
+        "Huy Nguyen <ndhgl99@gmail.com>"
+      ],
+      "requires": [
+        "ag-ui",
+        "audio-stream-in",
+        "audio-stream-out"
+      ],
+      "dependencies": [
+        "go.chanx.dev/v2@v2.2.0"
+      ],
+      "variants": {},
+      "only_variants": [],
+      "files": [
+        "README.md",
+        "agent.go",
+        "memory.go",
+        "sentences.go"
+      ],
+      "optional": {
+        "tests": [
+          "voiceagent_test.go"
         ]
       }
     }

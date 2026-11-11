@@ -18,4 +18,4 @@ implements: [transcriber@1]
 contract_topic: TranscriberTopic
 
 dependencies:
-  - "go.chanx.dev/v2@v2.2.0"
+  - "go.chanx.dev/v2@v2.3.0"

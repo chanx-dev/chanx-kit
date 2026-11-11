@@ -20,7 +20,7 @@ func (c sttConsumer) Topics() []chanx.TopicHandler { return []chanx.TopicHandler
 func joinTranscriber(t *testing.T, tr Transcriber) *chanxtest.Client {
 	t.Helper()
 	engine := chanx.New(chanx.Config{})
-	engine.Handle("/ws", sttConsumer{tr.Topic()}, chanx.Sequential())
+	engine.Handle("/ws", sttConsumer{tr.Topic()})
 	c := chanxtest.Connect(t, engine, "/ws")
 	c.Subscribe("transcribe:s")
 	chanxtest.ReceiveUntilMessage[audiostreamin.AudioConfigMessage](c)
@@ -77,7 +77,7 @@ func TestAWrongKeyIsReported(t *testing.T) {
 func TestNoKeyIsUnavailableOnSubscribe(t *testing.T) {
 	t.Setenv("DEEPGRAM_API_KEY", "")
 	engine := chanx.New(chanx.Config{})
-	engine.Handle("/ws", sttConsumer{Transcriber{}.Topic()}, chanx.Sequential())
+	engine.Handle("/ws", sttConsumer{Transcriber{}.Topic()})
 	c := chanxtest.Connect(t, engine, "/ws")
 	c.Subscribe("transcribe:s")
 	m, _ := chanxtest.ReceiveUntilMessage[audiostreamin.TranscriberErrorMessage](c)

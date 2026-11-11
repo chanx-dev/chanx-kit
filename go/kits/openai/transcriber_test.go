@@ -108,7 +108,7 @@ func utterance(c *chanxtest.Client, chunks int, language *string) {
 
 func join(t *testing.T, tr Transcriber) *chanxtest.Client {
 	engine := chanx.New(chanx.Config{})
-	engine.Handle("/ws", sttConsumer{tr.Topic()}, chanx.Sequential())
+	engine.Handle("/ws", sttConsumer{tr.Topic()})
 	c := chanxtest.Connect(t, engine, "/ws")
 	c.Subscribe("transcribe:s")
 	chanxtest.ReceiveUntilMessage[audiostreamin.AudioConfigMessage](c)

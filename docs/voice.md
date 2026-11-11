@@ -95,8 +95,7 @@ kits, then mount the topics on a consumer:
     	}
     }
 
-    // Audio frames must be handled in order.
-    engine.Handle("/ws/voice", VoiceConsumer{}, chanx.Name("voice"), chanx.Sequential())
+    engine.Handle("/ws/voice", VoiceConsumer{}, chanx.Name("voice"))
     ```
 
 Route it at `/ws/voice`, regenerate the client (`npm --prefix web run gen`), and use it:
@@ -292,7 +291,7 @@ it interrupts.
     	}
     }
 
-    engine.Handle("/ws/assistant", AssistantConsumer{}, chanx.Name("assistant"), chanx.Sequential())
+    engine.Handle("/ws/assistant", AssistantConsumer{}, chanx.Name("assistant"))
     assistant.Publisher = engine.Publisher()
     ```
 

@@ -24,7 +24,7 @@ func (AssistantConsumer) Topics() []chanx.TopicHandler {
 	}
 }
 
-engine.Handle("/ws/assistant", AssistantConsumer{}, chanx.Sequential())
+engine.Handle("/ws/assistant", AssistantConsumer{})
 agent.Publisher = engine.Publisher()
 ```
 

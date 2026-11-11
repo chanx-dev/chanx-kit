@@ -77,7 +77,7 @@
         "media-stream-in"
       ],
       "dependencies": [
-        "go.chanx.dev/v2@v2.2.0"
+        "go.chanx.dev/v2@v2.3.0"
       ],
       "variants": {},
       "only_variants": [],

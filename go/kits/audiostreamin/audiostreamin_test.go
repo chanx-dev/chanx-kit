@@ -116,7 +116,7 @@ func (voiceConsumer) Authenticate(_ *chanx.Context, r *chanx.Request) (any, erro
 func connect(t *testing.T, topic TranscriberTopic, user string) *chanxtest.Client {
 	t.Helper()
 	engine := chanx.New(chanx.Config{})
-	engine.Handle("/ws", voiceConsumer{topic}, chanx.Sequential())
+	engine.Handle("/ws", voiceConsumer{topic})
 	return chanxtest.Connect(t, engine, "/ws", chanxtest.Query("as", user))
 }
 
@@ -184,7 +184,7 @@ func TestWatchersReceiveTheTranscript(t *testing.T) {
 	var o opened
 	topicDef := TranscriberTopic{OpenStream: o.open}
 	engine := chanx.New(chanx.Config{})
-	engine.Handle("/ws", voiceConsumer{topicDef}, chanx.Sequential())
+	engine.Handle("/ws", voiceConsumer{topicDef})
 	speaker := chanxtest.Connect(t, engine, "/ws", chanxtest.Query("as", "ann"))
 	watcher := chanxtest.Connect(t, engine, "/ws", chanxtest.Query("as", "bob"))
 	watcher.Subscribe("transcript:s1")
@@ -231,7 +231,7 @@ func TestStreamsPerUserAreLimited(t *testing.T) {
 	var o opened
 	topicDef := TranscriberTopic{OpenStream: o.open, MaxSessionsPerUser: 1}
 	engine := chanx.New(chanx.Config{})
-	engine.Handle("/ws", voiceConsumer{topicDef}, chanx.Sequential())
+	engine.Handle("/ws", voiceConsumer{topicDef})
 	first := chanxtest.Connect(t, engine, "/ws", chanxtest.Query("as", "ann"))
 	second := chanxtest.Connect(t, engine, "/ws", chanxtest.Query("as", "ann"))
 	for _, c := range []*chanxtest.Client{first, second} {

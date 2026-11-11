@@ -37,9 +37,9 @@ type Scope struct {
 }
 
 // TranscriberTopic is transcribe:<session>: audio in, transcripts out. Set OpenStream.
-// Zero limits take the defaults; Off turns one off. Mount it with chanx.Sequential().
+// Zero limits take the defaults; Off turns one off. Its frames are handled in order.
 type TranscriberTopic struct {
-	chanx.BaseTopic `pattern:"transcribe:{session}" description:"Audio in, transcripts out."`
+	chanx.BaseTopic `pattern:"transcribe:{session}" description:"Audio in, transcripts out." ordered:"true"`
 	// OpenStream connects a provider; wrap ErrProviderUnavailable when it refuses.
 	OpenStream func(ctx context.Context, audio AudioStart) (TranscriberStream, error)
 	// ProviderAvailable is false when the provider cannot work, e.g. without a key.

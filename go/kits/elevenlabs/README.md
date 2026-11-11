@@ -23,7 +23,7 @@ func (VoiceConsumer) Topics() []chanx.TopicHandler {
 	}
 }
 
-engine.Handle("/ws/voice", VoiceConsumer{}, chanx.Sequential())
+engine.Handle("/ws/voice", VoiceConsumer{})
 ```
 
 ## How it maps

@@ -10,8 +10,9 @@ copit add @chanx-kit-go/audio-stream-in
 
 ## Use it
 
-Give the topic a provider stream, and mount its consumer with `chanx.Sequential()`, so
-`audio_start`, the chunks and `audio_end` are handled in order:
+Give the topic a provider stream. It is an ordered topic (chanx-go 2.3), so
+`audio_start`, the chunks and `audio_end` are handled in order while the rest of the
+consumer stays concurrent:
 
 ```go
 func (VoiceConsumer) Topics() []chanx.TopicHandler {
@@ -21,7 +22,7 @@ func (VoiceConsumer) Topics() []chanx.TopicHandler {
 	}
 }
 
-engine.Handle("/ws/voice", VoiceConsumer{}, chanx.Sequential())
+engine.Handle("/ws/voice", VoiceConsumer{})
 ```
 
 A client subscribes to `transcribe:<session>`, is sent `audio_config`, then streams

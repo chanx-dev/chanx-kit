@@ -109,7 +109,7 @@ func TestTheTopicTranscribesSpeech(t *testing.T) {
 	tr := DefaultTranscriber
 	tr.Script, tr.MsPerWord, tr.WordsPerFinal = []string{"hello", "world"}, 500, 2
 	engine := chanx.New(chanx.Config{})
-	engine.Handle("/ws", sttConsumer{tr.Topic()}, chanx.Sequential())
+	engine.Handle("/ws", sttConsumer{tr.Topic()})
 	c := chanxtest.Connect(t, engine, "/ws")
 	c.Subscribe("transcribe:s")
 	chanxtest.ReceiveUntilMessage[audiostreamin.AudioConfigMessage](c)

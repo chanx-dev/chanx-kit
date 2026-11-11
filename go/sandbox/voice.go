@@ -56,10 +56,9 @@ func mountVoice(engine *chanx.Engine) {
 	stt, tts := speech()
 	// A voice agent with the sandbox's scripted reply.
 	assistant := &voiceagent.Agent{Agent: agui.AgUiTopic{RunAgent: cannedReply}, Synthesizer: tts}
-	// Audio frames must be handled in order.
-	engine.Handle("/ws/voice", VoiceConsumer{stt: stt, tts: tts}, chanx.Name("voice"), chanx.Sequential(),
+	engine.Handle("/ws/voice", VoiceConsumer{stt: stt, tts: tts}, chanx.Name("voice"),
 		chanx.Description("Speech in and out: transcripts from audio, audio from text."))
-	engine.Handle("/ws/assistant", AssistantConsumer{agent: assistant, stt: stt}, chanx.Name("assistant"), chanx.Sequential(),
+	engine.Handle("/ws/assistant", AssistantConsumer{agent: assistant, stt: stt}, chanx.Name("assistant"),
 		chanx.Description("A voice agent: speak, hear the reply, interrupt by speaking."))
 	assistant.Publisher = engine.Publisher()
 }

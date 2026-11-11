@@ -22,7 +22,7 @@ your web app's source folder; copit sees React in `package.json` and picks the R
 variant:
 
 ```bash
-copit registry add chanx-kit-ui github:chanx-dev/chanx-kit@v0.5.0 --to web/src/chanx-kit
+copit registry add chanx-kit-ui github:chanx-dev/chanx-kit@v0.5.1 --to web/src/chanx-kit
 ```
 
 Then add a UI kit, usually with its server kit in the same command:

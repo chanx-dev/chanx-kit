@@ -11,47 +11,47 @@ kit and a React client typed from the server's schema. Create one with
 === "Node"
 
     ```bash title="Express"
-    copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/express-react my-app
+    copit create gh:chanx-dev/chanx-kit@v0.5.1/templates/express-react my-app
     ```
 
     ```bash title="Fastify"
-    copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/fastify-react my-app
+    copit create gh:chanx-dev/chanx-kit@v0.5.1/templates/fastify-react my-app
     ```
 
     ```bash title="Hono"
-    copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/hono-react my-app
+    copit create gh:chanx-dev/chanx-kit@v0.5.1/templates/hono-react my-app
     ```
 
 === "Python"
 
     ```bash title="FastAPI"
-    copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/fastapi-react my-app
+    copit create gh:chanx-dev/chanx-kit@v0.5.1/templates/fastapi-react my-app
     ```
 
     ```bash title="Django"
-    copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/django-react my-app
+    copit create gh:chanx-dev/chanx-kit@v0.5.1/templates/django-react my-app
     ```
 
 === "Go"
 
     ```bash title="net/http"
-    copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/go-nethttp-react my-app
+    copit create gh:chanx-dev/chanx-kit@v0.5.1/templates/go-nethttp-react my-app
     ```
 
     ```bash title="chi"
-    copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/go-chi-react my-app
+    copit create gh:chanx-dev/chanx-kit@v0.5.1/templates/go-chi-react my-app
     ```
 
     ```bash title="gin"
-    copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/go-gin-react my-app
+    copit create gh:chanx-dev/chanx-kit@v0.5.1/templates/go-gin-react my-app
     ```
 
     ```bash title="Echo"
-    copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/go-echo-react my-app
+    copit create gh:chanx-dev/chanx-kit@v0.5.1/templates/go-echo-react my-app
     ```
 
     ```bash title="Fiber"
-    copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/go-fiber-react my-app
+    copit create gh:chanx-dev/chanx-kit@v0.5.1/templates/go-fiber-react my-app
     ```
 
 Each one's README has its run commands, how to send from another process, and where

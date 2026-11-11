@@ -35,21 +35,21 @@ You use it twice here: to create the app now, and to add a second feature later.
 === "Node"
 
     ```bash
-    copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/express-react inbox
+    copit create gh:chanx-dev/chanx-kit@v0.5.1/templates/express-react inbox
     cd inbox
     ```
 
 === "Python"
 
     ```bash
-    copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/fastapi-react inbox
+    copit create gh:chanx-dev/chanx-kit@v0.5.1/templates/fastapi-react inbox
     cd inbox
     ```
 
 === "Go"
 
     ```bash
-    copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/go-nethttp-react inbox
+    copit create gh:chanx-dev/chanx-kit@v0.5.1/templates/go-nethttp-react inbox
     cd inbox
     ```
 

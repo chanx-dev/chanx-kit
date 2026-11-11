@@ -73,7 +73,7 @@ Then create a server and a React client with the notification kit wired end to e
 client typed from the server's schema:
 
 ```bash
-copit create gh:chanx-dev/chanx-kit@v0.5.0/templates/express-react my-app
+copit create gh:chanx-dev/chanx-kit@v0.5.1/templates/express-react my-app
 ```
 
 Swap `express-react` for your framework: `fastify-react`, `hono-react`,
@@ -96,7 +96,7 @@ records where kits come from and where they land, in `copit.toml`:
 
 ```bash
 uvx copit init
-uvx copit registry add chanx-kit github:chanx-dev/chanx-kit@v0.5.0 --to app/ws_kits
+uvx copit registry add chanx-kit github:chanx-dev/chanx-kit@v0.5.1 --to app/ws_kits
 ```
 
 **Add a kit.** The source is copied into `app/ws_kits/notification/`, along with any kit

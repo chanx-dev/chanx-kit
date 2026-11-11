@@ -24,24 +24,24 @@ one. It writes this down in `copit.toml`, so later commands need only a kit's na
 
     ```bash
     copit init
-    copit registry add chanx-kit-js github:chanx-dev/chanx-kit@v0.5.0 --to src/ws-kits
-    copit registry add chanx-kit-ui github:chanx-dev/chanx-kit@v0.5.0 --to web/src/chanx-kit
+    copit registry add chanx-kit-js github:chanx-dev/chanx-kit@v0.5.1 --to src/ws-kits
+    copit registry add chanx-kit-ui github:chanx-dev/chanx-kit@v0.5.1 --to web/src/chanx-kit
     ```
 
 === "Python"
 
     ```bash
     copit init
-    copit registry add chanx-kit github:chanx-dev/chanx-kit@v0.5.0 --to app/ws_kits
-    copit registry add chanx-kit-ui github:chanx-dev/chanx-kit@v0.5.0 --to web/src/chanx-kit
+    copit registry add chanx-kit github:chanx-dev/chanx-kit@v0.5.1 --to app/ws_kits
+    copit registry add chanx-kit-ui github:chanx-dev/chanx-kit@v0.5.1 --to web/src/chanx-kit
     ```
 
 === "Go"
 
     ```bash
     copit init
-    copit registry add chanx-kit-go github:chanx-dev/chanx-kit@v0.5.0 --to internal/wskits
-    copit registry add chanx-kit-ui github:chanx-dev/chanx-kit@v0.5.0 --to web/src/chanx-kit
+    copit registry add chanx-kit-go github:chanx-dev/chanx-kit@v0.5.1 --to internal/wskits
+    copit registry add chanx-kit-ui github:chanx-dev/chanx-kit@v0.5.1 --to web/src/chanx-kit
     ```
 
 `--to` is where kits land; leave it out to take the suggested folder. copit 0.10 or newer
@@ -51,7 +51,7 @@ their imports at your module.
 ```toml
 # copit.toml, written for you
 [registries.chanx-kit-js]
-source = "github:chanx-dev/chanx-kit@v0.5.0"
+source = "github:chanx-dev/chanx-kit@v0.5.1"
 index = "js/copit-registry.json"
 target = "src/ws-kits"
 ```

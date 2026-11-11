@@ -19,7 +19,7 @@ import { agent } from '@/generated';
 export function Conversation({ threadId }: { threadId: string }) {
   const { messages, running, error, run, cancel } = useAgentThread(
     agent,
-    agent.topics.agentTopic.with({ thread_id: threadId }),
+    agent.topics.agUiTopic.with({ thread_id: threadId }),
   );
   // messages are AG-UI Message objects: role, content, toolCalls.
 }
@@ -45,7 +45,7 @@ export function Conversation({ threadId }: { threadId: string }) {
 ```ts
 import { connectAgentThread } from '@/chanx-kit/ag-ui';
 
-const chat = connectAgentThread(client, agent, agent.topics.agentTopic.with({ thread_id: 't1' }));
+const chat = connectAgentThread(client, agent, agent.topics.agUiTopic.with({ thread_id: 't1' }));
 chat.thread.subscribe(() => render(chat.thread.getSnapshot()));
 chat.start();
 chat.run('Hello');

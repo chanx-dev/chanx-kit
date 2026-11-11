@@ -20,7 +20,7 @@ import { room } from '@/generated';
 export function Room({ name, me }: { name: string; me: string }) {
   const options = { params: { room: name } };
   // Same channel and options, so both hooks share one socket.
-  const { entries, status, send } = useChat(room, room.topics.chatTopic.with({ room: name }), options);
+  const { entries, status, send } = useChat(room, room.topics.roomChatTopic.with({ room: name }), options);
   const { members } = usePresence(room, room.topics.presenceTopic.with({ scope: name }), options);
   return <ChatRoom entries={entries} status={status} onSend={send} members={members} self={me} />;
 }
@@ -34,7 +34,7 @@ saved. `requestBacklog(limit)` asks for history again.
 ```ts
 import { connectChat } from '@/chanx-kit/chat';
 
-const lobby = connectChat(client, room, room.topics.chatTopic.with({ room: 'lobby' }));
+const lobby = connectChat(client, room, room.topics.roomChatTopic.with({ room: 'lobby' }));
 lobby.log.subscribe(() => render(lobby.log.getSnapshot().entries));
 lobby.start();
 lobby.send('hello');

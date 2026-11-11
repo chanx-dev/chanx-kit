@@ -20,7 +20,7 @@ export interface ChatBacklogPayload {
 /** Client asks for history again, without reconnecting. */
 export interface ChatBacklogRequestMessage {
   action: "chat_backlog_request";
-  payload?: ChatBacklogRequestPayload;
+  payload: ChatBacklogRequestPayload;
 }
 
 export interface ChatBacklogRequestPayload {

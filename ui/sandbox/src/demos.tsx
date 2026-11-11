@@ -80,7 +80,7 @@ export const DEMOS: [Demo, ...Demo[]] = [
     kits: ({ stt }) => ['audio-stream-in', stt],
     ui: ['transcriber'],
     consumer: 'VoiceConsumer',
-    servers: ['python'],
+    servers: EVERY_SERVER,
     render: () => <VoicePanel />,
   },
   {
@@ -91,7 +91,7 @@ export const DEMOS: [Demo, ...Demo[]] = [
     kits: ({ tts }) => ['audio-stream-out', tts],
     ui: ['player'],
     consumer: 'VoiceConsumer',
-    servers: ['python'],
+    servers: EVERY_SERVER,
     render: () => <SpeechPanel />,
   },
   {
@@ -102,7 +102,7 @@ export const DEMOS: [Demo, ...Demo[]] = [
     kits: ({ stt, tts }) => [...new Set(['voice-agent', stt, tts])],
     ui: ['voice-agent'],
     consumer: 'AssistantConsumer',
-    servers: ['python'],
+    servers: EVERY_SERVER,
     render: () => <AssistantPanel />,
   },
 ];

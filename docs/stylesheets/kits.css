@@ -54,13 +54,67 @@
   color: var(--md-default-fg-color--light);
 }
 
+/* A kit's facts under its title: a label column, then badges and chips. */
+.md-typeset .kit-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.4rem;
+  font-size: 0.75rem;
+}
+.md-typeset .kit-facts__label {
+  color: var(--md-default-fg-color--light);
+  font-weight: 600;
+}
+.md-typeset .kit-facts__value {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+@media screen and (max-width: 30em) {
+  .md-typeset .kit-facts {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+  .md-typeset .kit-facts__value {
+    margin-bottom: 0.4rem;
+  }
+}
+
+/* UI kits and contracts as chips, the same size as the server badges. */
+.md-typeset a.kit-chip,
+.md-typeset code.kit-chip {
+  display: inline-flex;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--md-default-fg-color--lighter);
+  border-radius: 1rem;
+  background: none;
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+.md-typeset a.kit-chip code {
+  padding: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+.md-typeset a.kit-chip:hover {
+  border-color: var(--md-accent-fg-color);
+  color: var(--md-accent-fg-color);
+}
+
 /* Which servers a kit runs on, above its tabs. */
 .kit-badge {
   display: inline-block;
-  margin-right: 0.25rem;
-  padding: 0.05rem 0.5rem;
+  padding: 0.1rem 0.55rem;
   border-radius: 1rem;
   font-size: 0.7rem;
+  line-height: 1.4;
   border: 1px solid var(--md-default-fg-color--lighter);
 }
 .kit-badge[data-on='true'] {

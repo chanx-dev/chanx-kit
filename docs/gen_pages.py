@@ -173,6 +173,36 @@ def link_list(names: list[str], prefix: str) -> str:
     return ", ".join(f"[`{name}`]({prefix}{name}.md)" for name in names)
 
 
+def chips(names: list[str], prefix: str) -> str:
+    return " ".join(f"[`{name}`]({prefix}{name}.md){{ .kit-chip }}" for name in names)
+
+
+def contract_chips(contracts: list[str], kits: str) -> str:
+    """Each contract, linked to the messages of the kit that defines it."""
+    return " ".join(
+        f"[`{c}`]({kits}{DEFINED_IN[c]}.md#messages){{ .kit-chip }}"
+        if c in DEFINED_IN
+        else f"`{c}`{{ .kit-chip }}"
+        for c in contracts
+    )
+
+
+def contract_links(contracts: list[str], kits: str) -> str:
+    return ", ".join(
+        f"[`{c}`]({kits}{DEFINED_IN[c]}.md#messages)" if c in DEFINED_IN else f"`{c}`"
+        for c in contracts
+    )
+
+
+def facts_block(rows: list[tuple[str, str]]) -> str:
+    """Labelled facts under a page title, one row each."""
+    lines = ['<div class="kit-facts" markdown>']
+    for label, value in rows:
+        lines.append(f'<div class="kit-facts__label">{label}</div>')
+        lines.append(f'<div class="kit-facts__value" markdown="span">{value}</div>')
+    return "\n".join([*lines, "</div>"])
+
+
 nav_lines: list[str] = []
 
 
@@ -316,12 +346,13 @@ def availability(name: str, component: dict[str, Any]) -> str:
     )
     contracts = contracts_of(component)
     uis = sorted({u for c in contracts for u in UIS_OF.get(c, [])})
-    facts = []
+    rows = [("Runs on", badges)]
     if uis:
-        facts.append("UI kit: " + link_list(uis, "../ui/"))
+        rows.append(("UI kits" if len(uis) > 1 else "UI kit", chips(uis, "../ui/")))
     if contracts:
-        facts.append("Contract: " + ", ".join(f"`{c}`" for c in contracts))
-    return badges + (" · " + " · ".join(facts) if facts else "")
+        label = "Contracts" if len(contracts) > 1 else "Contract"
+        rows.append((label, contract_chips(contracts, "")))
+    return facts_block(rows)
 
 
 def kit_page(name: str, component: dict[str, Any]) -> str:
@@ -524,21 +555,24 @@ def ui_page(name: str, component: dict[str, Any]) -> str:
     readme = (REPO_ROOT / component["path"] / "README.md").read_text()
     body = re.sub(r"\A#\s+.*\n+", "", readme, count=1)
 
-    facts = []
-    for contract in contracts_of(component):
-        facts.append(f"Contract: `{contract}`")
-        if SERVERS_OF.get(contract):
-            facts.append(f"Works with: {link_list(SERVERS_OF[contract], '../kits/')}")
+    rows = []
+    contracts = contracts_of(component)
+    if contracts:
+        label = "Contracts" if len(contracts) > 1 else "Contract"
+        rows.append((label, contract_chips(contracts, "../kits/")))
+    servers = sorted({s for c in contracts for s in SERVERS_OF.get(c, [])})
+    if servers:
+        rows.append(("Works with", chips(servers, "../kits/")))
     if component.get("requires"):
-        facts.append(f"Brings: {link_list(component['requires'], '')}")
+        rows.append(("Brings", chips(component["requires"], "")))
     if variants := ", ".join(component.get("variants", {})):
-        facts.append(f"{variants.title()}, on a framework-free core")
+        rows.append(("Built for", f"{variants.title()}, on a framework-free core"))
 
     # The README opens with the description and the copit command.
     header = [
         f"# {component['title']}",
         "",
-        " · ".join(facts),
+        facts_block(rows),
         "",
         *foundation_note(name, component, UI_REQUIRED_BY),
         "<small>First time? Set up the UI registry once:"
@@ -587,7 +621,7 @@ ui_index = [
 ]
 for name in sorted(UI_COMPONENTS):
     component = UI_COMPONENTS[name]
-    contract = ", ".join(f"`{c}`" for c in contracts_of(component))
+    contract = contract_links(contracts_of(component), "../kits/")
     ui_index.append(
         f"| [`{name}`]({name}.md) | {contract} | {component['description']} |"
     )
